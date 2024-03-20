@@ -1,0 +1,1 @@
+<button class="btn btn-sm btn-info pick-item" data-item-id="{{ $model->id }}" data-item-code="{{ $model->item_code }}" data-description="{{ $model->description }}"><i class="fa fa-check-square-o"></i> Pick!</button>

@@ -77,6 +77,7 @@
                     <th>Item Code</th>
                     <th>Description</th>
                     <th>Group</th>
+                    <th width="5%">Stock</th>
                     <th width="5%">Status</th>
                     <th class="text-center" width="10%">Action</th>
                   </tr>
@@ -195,6 +196,11 @@
         data: "group_name"
         , name: "group_name"
         , orderable: false
+      , }, {
+        data: "total_stock"
+        , name: "total_stock"
+        , orderable: false
+        , className: "text-center"
       , }, {
         data: "item_status"
         , name: "item_status"

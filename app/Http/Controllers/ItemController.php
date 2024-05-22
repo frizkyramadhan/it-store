@@ -37,8 +37,15 @@ class ItemController extends Controller
     {
         $items = Item::leftJoin('groups', 'items.group_id', '=', 'groups.id')
             ->select('items.*', 'groups.group_name')
+            ->selectSub(function ($query) {
+                return $query->select(DB::raw('SUM(stock) AS stock'))  // Use SUM for total stock
+                    ->from('inventories')
+                    ->whereColumn('inventories.item_id', 'items.id')
+                    ->groupBy('inventories.item_id');  // Group by item_id for aggregation
+            }, 'total_stock')  // Rename the column to 'total_stock' for clarity
             ->orderBy('group_name', 'asc')
             ->orderBy('item_code', 'asc');
+
 
         return datatables()->of($items)
             ->addIndexColumn()
@@ -50,6 +57,13 @@ class ItemController extends Controller
             })
             ->addColumn('group_name', function ($items) {
                 return $items->group_name;
+            })
+            ->addColumn('total_stock', function ($items) {
+                if($items->total_stock == null || $items->total_stock == 0) {
+                    return 0;
+                } else {
+                    return $items->total_stock;
+                }
             })
             ->addColumn('item_status', function ($items) {
                 if ($items->item_status == 'active') {

@@ -86,7 +86,7 @@
           </div>
           <div class="form-group">
             <label>Remarks</label>
-            <textarea id="trf_remarks" class="form-control" rows="3" name="trf_remarks">{{ $sessionData ? $sessionData['trf']['trf_remarks'] : "" }}</textarea>
+            <textarea id="trf_remarks" class="form-control" rows="3" name="trf_remarks" required>{{ $sessionData ? $sessionData['trf']['trf_remarks'] : "" }}</textarea>
           </div>
         </div>
         {{-- inventory detail --}}

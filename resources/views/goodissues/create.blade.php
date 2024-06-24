@@ -60,7 +60,7 @@
                 </div>
                 <div class="form-group">
                   <label>Remarks</label>
-                  <textarea class="form-control" rows="3" name="gi_remarks">{{ $sessionData ? $sessionData['gi']['gi_remarks'] : ""}}</textarea>
+                  <textarea class="form-control" rows="3" name="gi_remarks" required>{{ $sessionData ? $sessionData['gi']['gi_remarks'] : ""}}</textarea>
                   <input type="hidden" class="form-control" name="gi_status" value="open" />
                 </div>
               </div>

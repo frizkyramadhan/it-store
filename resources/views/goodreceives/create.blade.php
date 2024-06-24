@@ -69,7 +69,7 @@
                 </div>
                 <div class="form-group">
                   <label>Remarks</label>
-                  <textarea class="form-control" rows="3" name="gr_remarks">{{ $sessionData ? $sessionData['gr']['gr_remarks'] : ""}}</textarea>
+                  <textarea class="form-control" rows="3" name="gr_remarks" required>{{ $sessionData ? $sessionData['gr']['gr_remarks'] : ""}}</textarea>
                   <input type="hidden" class="form-control" name="gr_status" value="open" />
                 </div>
               </div>

@@ -17,8 +17,9 @@
         <ul class="nav child_menu" style="display: {{ Request::is('reports*') ? 'block' : 'none' }}">
           <li class="{{ Request::is('reports/good-receive*') ? 'current-page' : '' }}"><a href="{{ url('reports/good-receive') }}">Good Receive Reports</a></li>
           <li class="{{ Request::is('reports/good-issue*') ? 'current-page' : '' }}"><a href="{{ url('reports/good-issue') }}">Good Issue Reports</a></li>
-          <li class="{{ Request::is('reports/transfer*') ? 'current-page' : '' }}"><a href="{{ url('reports/transfer') }}">Inventory Transfer Reports</a></li>
+          <li class="{{ Request::is('reports/transfer*') ? 'current-page' : '' }}"><a href="{{ url('reports/transfer') }}">Transfer Reports</a></li>
           <li class="{{ Request::is('reports/inventory-audit*') ? 'current-page' : '' }}"><a href="{{ url('reports/inventory-audit') }}">Inventory Audit Reports</a></li>
+          <li class="{{ Request::is('reports/inventory-in-warehouse*') ? 'current-page' : '' }}"><a href="{{ url('reports/inventory-in-warehouse') }}">Inventory in Warehouse Reports</a></li>
         </ul>
       </li>
       @can('admin')

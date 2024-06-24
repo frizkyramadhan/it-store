@@ -31,7 +31,7 @@
             @endif
             <form action="{{ url()->current() }}" method="get">
               <div class="row">
-                <div class="col-md-5 col-sm-12 col-xs-12 form-group">
+                <div class="col-md-4 col-sm-12 col-xs-12 form-group">
                   <label>Item Code</label>
                   <div class="input-group">
                     <input type="text" class="form-control item-code" name="item_code" value="{{ request('item_code') }}">
@@ -40,7 +40,7 @@
                     </span>
                   </div>
                 </div>
-                <div class="col-md-5 col-sm-12 col-xs-12 form-group">
+                <div class="col-md-4 col-sm-12 col-xs-12 form-group">
                   <label>Warehouse</label>
                   <select class="select2 form-control" name="warehouse_ids[]" multiple="multiple">
                     @foreach ($warehouses as $warehouse)
@@ -48,7 +48,13 @@
                     @endforeach
                   </select>
                 </div>
-
+                <div class="col-md-2 col-sm-12 col-xs-12 form-group">
+                  <div class="checkbox">
+                    <label>
+                      <input type="checkbox" class="flat" name="hide_zero" value="1" {{ request()->input('hide_zero') ? 'checked' : '' }}> Hide Items with No Quantity in Stock
+                    </label>
+                  </div>
+                </div>
                 <div class="col-md-2 col-sm-12 col-xs-12 form-group">
                   @if (isset($results) && count($results) > 0)
                   <a href="{{ route('report.inventoryinwarehouse') }}" class="btn btn-warning form-control"><i class="fa fa-undo"></i> Reset</a>
@@ -140,6 +146,8 @@
 @endsection
 
 @section('styles')
+<!-- iCheck -->
+<link href="{{ asset('assets/vendors/iCheck/skins/flat/green.css') }}" rel="stylesheet">
 <!-- Select2 -->
 <link href="{{ asset('assets/vendors/select2/dist/css/select2.min.css') }}" rel="stylesheet">
 <!-- Datatables -->
@@ -148,10 +156,11 @@
 <link href="{{ asset('assets/vendors/datatables.net-fixedheader-bs/css/fixedHeader.bootstrap.min.css') }}" rel="stylesheet">
 <link href="{{ asset('assets/vendors/datatables.net-responsive-bs/css/responsive.bootstrap.min.css') }}" rel="stylesheet">
 <link href="{{ asset('assets/vendors/datatables.net-scroller-bs/css/scroller.bootstrap.min.css') }}" rel="stylesheet">
-
 @endsection
 
 @section('scripts')
+<!-- iCheck -->
+<script src="{{ asset('assets/vendors/iCheck/icheck.min.js') }}"></script>
 <!-- Select2 -->
 <script src="{{ asset('assets/vendors/select2/dist/js/select2.full.min.js') }}"></script>
 <script>

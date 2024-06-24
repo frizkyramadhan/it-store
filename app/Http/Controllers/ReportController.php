@@ -268,51 +268,58 @@ class ReportController extends Controller
     }
 
     public function inventoryInWarehouse(Request $request)
-    {
-        $title = 'Reports';
-        $subtitle = 'Inventory in Warehouse Report';
-        $warehouses = Warehouse::with('bouwheer')
-            ->where('warehouse_status', 'active')
+{
+    $title = 'Reports';
+    $subtitle = 'Inventory in Warehouse Report';
+    $warehouses = Warehouse::with('bouwheer')
+        ->where('warehouse_status', 'active')
+        ->orderBy('warehouse_name', 'asc')
+        ->get();
+    $results  = null;
+
+    $itemCode = $request->input('item_code');
+    $warehouseIds = $request->input('warehouse_ids');
+    $hideZero = $request->input('hide_zero');
+
+    $inWarehouseQuery = DB::table('inventories')
+        ->select(
+            'items.item_code',
+            'items.description',
+            'groups.group_name',
+            'warehouses.warehouse_name',
+            'warehouses.warehouse_location',
+            'inventories.stock'
+        )
+        ->leftJoin('items', 'inventories.item_id', '=', 'items.id')
+        ->leftJoin('groups', 'items.group_id', '=', 'groups.id')
+        ->leftJoin('warehouses', 'inventories.warehouse_id', '=', 'warehouses.id');
+
+    // Menerapkan filter jika ada input dari form
+    if ($itemCode) {
+        $inWarehouseQuery->where('items.item_code', 'LIKE', "%$itemCode%");
+    }
+
+    if ($warehouseIds) {
+        $inWarehouseQuery->whereIn('inventories.warehouse_id', $warehouseIds);
+    }
+
+    // Tambahkan kondisi untuk menyembunyikan stok nol jika checkbox dicentang
+    if ($hideZero) {
+        $inWarehouseQuery->where('inventories.stock', '>', 0);
+    }
+
+    // Jika tidak ada filter, maka kosongkan subquery
+    if (!empty($itemCode) || !empty($warehouseIds)) {
+        // Gabungkan ketiga bagian subquery menggunakan union
+        $results = $inWarehouseQuery
+            ->orderBy('item_code', 'asc')
             ->orderBy('warehouse_name', 'asc')
             ->get();
-        $results  = null;
-
-        $itemCode = $request->input('item_code');
-        $warehouseIds = $request->input('warehouse_ids');
-
-        $inWarehouseQuery = DB::table('inventories')
-            ->select(
-                'items.item_code',
-                'items.description',
-                'groups.group_name',
-                'warehouses.warehouse_name',
-                'warehouses.warehouse_location',
-                'inventories.stock'
-            )
-            ->leftJoin('items', 'inventories.item_id', '=', 'items.id')
-            ->leftJoin('groups', 'items.group_id', '=', 'groups.id')
-            ->leftJoin('warehouses', 'inventories.warehouse_id', '=', 'warehouses.id');
-
-        // Menerapkan filter jika ada input dari form
-        if ($itemCode) {
-            $inWarehouseQuery->where('items.item_code', 'LIKE', "%$itemCode%");
-        }
-
-        if ($warehouseIds) {
-            $inWarehouseQuery->whereIn('inventories.warehouse_id', $warehouseIds);
-        }
-
-        // Jika tidak ada filter, maka kosongkan subquery
-        if (!empty($itemCode) || !empty($warehouseIds)) {
-            //Gabungkan ketiga bagian subquery menggunakan union
-            $results = $inWarehouseQuery
-                ->orderBy('item_code', 'asc')
-                ->orderBy('warehouse_name', 'asc')
-                ->get();
-        }
-
-        return view('reports.inwarehouse', compact('title', 'subtitle', 'warehouses', 'results'));
     }
+
+    return view('reports.inwarehouse', compact('title', 'subtitle', 'warehouses', 'results'));
+}
+
 
 
 

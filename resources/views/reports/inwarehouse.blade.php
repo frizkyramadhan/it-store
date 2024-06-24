@@ -31,7 +31,7 @@
             @endif
             <form action="{{ url()->current() }}" method="get">
               <div class="row">
-                <div class="col-md-4 col-sm-12 col-xs-12 form-group">
+                <div class="col-md-5 col-sm-12 col-xs-12 form-group">
                   <label>Item Code</label>
                   <div class="input-group">
                     <input type="text" class="form-control item-code" name="item_code" value="{{ request('item_code') }}">
@@ -40,20 +40,17 @@
                     </span>
                   </div>
                 </div>
-                <div class="col-md-4 col-sm-12 col-xs-12 form-group">
+                <div class="col-md-5 col-sm-12 col-xs-12 form-group checkbox-inline">
                   <label>Warehouse</label>
                   <select class="select2 form-control" name="warehouse_ids[]" multiple="multiple">
                     @foreach ($warehouses as $warehouse)
                     <option value="{{ $warehouse->id }}" {{ in_array($warehouse->id, request('warehouse_ids', [])) ? 'selected' : '' }}>{{ $warehouse->warehouse_name }}</option>
                     @endforeach
                   </select>
-                </div>
-                <div class="col-md-2 col-sm-12 col-xs-12 form-group">
-                  <div class="checkbox">
-                    <label>
-                      <input type="checkbox" class="flat" name="hide_zero" value="1" {{ request()->input('hide_zero') ? 'checked' : '' }}> Hide Items with No Quantity in Stock
-                    </label>
-                  </div>
+                  <br><br>
+                  <label>
+                    <input type="checkbox" class="flat" name="hide_zero" value="1" {{ request()->input('hide_zero') ? 'checked' : '' }}> Hide Items with No Quantity in Stock
+                  </label>
                 </div>
                 <div class="col-md-2 col-sm-12 col-xs-12 form-group">
                   @if (isset($results) && count($results) > 0)

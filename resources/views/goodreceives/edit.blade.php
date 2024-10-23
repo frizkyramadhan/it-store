@@ -29,130 +29,73 @@
               {{ session('success') }}
             </div>
             @endif
-            <form data-parsley-validate class="form-horizontal form-label-left" action="{{ route('items.update', ['item'=> $item->id]) }}" method="POST">
-              @method('PATCH')
+            @if (session('error'))
+            <div class="alert alert-danger alert-dismissible fade in" role="alert">
+              <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">×</span>
+              </button>
+              {{ session('error') }}
+            </div>
+            @endif
+            <form data-parsley-validate class="form-horizontal form-label-left" action="{{ route('goodreceive.update', ['goodreceive'=> $goodreceive->id]) }}" method="POST">
               @csrf
-              <div class="col-md-4 col-xs-12 left-margin">
+              @method('PATCH')
+              <div class="col-md-6 col-xs-12 left-margin">
                 <div class="form-group">
-                  <label>Item Code <span class="required">*</span></label>
-                  <input type="text" class="form-control" name="item_code" value="{{ $item->item_code }}" required>
+                  <label>Document No. <span class="required">*</span></label>
+                  <input type="text" class="form-control" name="gr_doc_num" value="{{ $goodreceive->gr_doc_num }}" required readonly>
                 </div>
                 <div class="form-group">
-                  <label>Description <span class="required">*</span></label>
-                  <input type="text" class="form-control" name="description" value="{{ $item->description }}" required>
+                  <label>Posting Date <span class="required">*</span></label>
+                  <input type="date" class="form-control" name="gr_posting_date" value="{{ $goodreceive->gr_posting_date }}" required>
                 </div>
+              </div>
+              <div class="col-md-6 col-xs-12 left-margin">
                 <div class="form-group">
-                  <label>Type <span class="required">*</span></label>
-                  <select id="type" class="select2 form-control" name="type_id" style="width: 100%" required>
-                    <option value="">Select Type</option>
-                    @foreach ($types as $type)
-                    <option value="{{ $type->id }}" {{ $item->type_id == $type->id ? 'selected' : '' }}>{{ $type->type_name }}</option>
+                  <label>Vendor <span class="required">*</span></label>
+                  <select id="vendor" class="select2 form-control" name="vendor_id" style="width: 100%" required>
+                    <option value="">Select Vendor</option>
+                    @foreach ($vendors as $vendor)
+                    <option value="{{ $vendor->id }}" {{ $goodreceive->vendor_id == $vendor->id ? "selected" : "" }}>{{ $vendor->vendor_name }}</option>
                     @endforeach
                   </select>
                 </div>
                 <div class="form-group">
-                  <label>Group <span class="required">*</span></label>
-                  <select id="group" class="select2 form-control" name="group_id" style="width: 100%">
-                    <option value="">Select Group</option>
-                    @foreach ($groups as $group)
-                    <option value="{{ $group->id }}" {{ $item->group_id == $group->id ? 'selected' : '' }}>{{ $group->group_name }}</option>
-                    @endforeach
-                  </select>
+                  <label>Warehouse <span class="required">*</span></label>
+                  <input type="text" class="form-control" value="{{ $goodreceive->warehouse->warehouse_name }} ({{ $goodreceive->warehouse->bouwheer->bouwheer_name }})" required readonly>
                 </div>
                 <div class="form-group">
-                  <label>Status</label>
-                  <div data-toggle="buttons">
-                    <label class="btn btn-default {{ $item->item_status == 'active' ? 'active' : '' }}">
-                      <input type="radio" name="item_status" value="active" {{ $item->item_status == 'active' ? 'checked' : '' }}> Active
-                    </label>
-                    <label class="btn btn-default {{ $item->item_status == 'inactive' ? 'active' : '' }}">
-                      <input type="radio" name="item_status" value="inactive" {{ $item->item_status == 'inactive' ? 'checked' : '' }}> Inactive
-                    </label>
-                  </div>
+                  <label>Remarks</label>
+                  <textarea class="form-control" rows="3" name="gr_remarks" required>{{ $goodreceive->gr_remarks }}</textarea>
+                  <input type="hidden" class="form-control" name="gr_status" value="open" />
                 </div>
               </div>
-              <div class="col-md-8 col-xs-12 left-margin">
-                <div class="" role="tabpanel" data-example-id="togglable-tabs">
-                  <ul id="myTab" class="nav nav-tabs bar_tabs" role="tablist">
-                    <li role="presentation" class="active"><a href="#tab_content1" id="dimension-tab" role="tab" data-toggle="tab" aria-expanded="true">Dimension & Weight</a>
-                    </li>
-                    <li role="presentation" class=""><a href="#tab_content3" role="tab" id="category-tab" data-toggle="tab" aria-expanded="false">Category & Manufacture</a>
-                    </li>
-                  </ul>
-                  <div id="myTabContent" class="tab-content">
-                    <div role="tabpanel" class="tab-pane fade active in" id="tab_content1" aria-labelledby="dimension-tab">
-                      <div class="col-md-6 col-xs-12 left-margin">
-                        <div class="form-group">
-                          <label>Length</label>
-                          <input type="number" step="0.01" class="form-control" name="dims_l" value="{{ $item->dims_l }}">
-                        </div>
-                        <div class="form-group">
-                          <label>Width</label>
-                          <input type="number" step="0.01" class="form-control" name="dims_w" value="{{ $item->dims_w }}">
-                        </div>
-                        <div class="form-group">
-                          <label>Height</label>
-                          <input type="number" step="0.01" class="form-control" name="dims_h" value="{{ $item->dims_h }}">
-                        </div>
-                        <div class="form-group">
-                          <label>Weight / Each</label>
-                          <input type="number" step="0.0001" class="form-control" name="weight_ea" value="{{ $item->weight_ea }}">
-                        </div>
-                      </div>
-                      <div class="col-md-6 col-xs-12 left-margin">
-                        <div class="form-group">
-                          <label>NEC / Each</label>
-                          <input type="text" class="form-control" name="nec_ea" value="{{ $item->nec_ea }}">
-                        </div>
-                        <div class="form-group">
-                          <label>NEC / Box</label>
-                          <input type="text" class="form-control" name="nec_box" value="{{ $item->nec_box }}">
-                        </div>
-                        <div class="form-group">
-                          <label>GW / Box</label>
-                          <input type="number" step="0.0001" class="form-control" name="gw_box" value="{{ $item->gw_box }}">
-                        </div>
-                        <div class="form-group">
-                          <label>NW / Box</label>
-                          <input type="number" step="0.0001" class="form-control" name="nw_box" value="{{ $item->nw_box }}">
-                        </div>
-                      </div>
-                    </div>
-                    <div role="tabpanel" class="tab-pane fade" id="tab_content3" aria-labelledby="category-tab">
-                      <div class="col-md-6 col-xs-12 left-margin">
-                        <div class="form-group">
-                          <label>UN Number</label>
-                          <input type="text" class="form-control" name="un_no" value="{{ $item->un_no }}">
-                        </div>
-                        <div class="form-group">
-                          <label>Classification</label>
-                          <input type="text" class="form-control" name="classification" value="{{ $item->classification }}">
-                        </div>
-                        <div class="form-group">
-                          <label>Ex</label>
-                          <input type="text" class="form-control" name="ex" value="{{ $item->ex }}">
-                        </div>
-                      </div>
-                      <div class="col-md-6 col-xs-12 left-margin">
-                        <div class="form-group">
-                          <label>Manufacture From</label>
-                          <input type="text" class="form-control" name="manu_from" value="{{ $item->manu_from }}">
-                        </div>
-                        <div class="form-group">
-                          <label>Shelf Life</label>
-                          <input type="text" class="form-control" name="shelf_life" value="{{ $item->shelf_life }}">
-                        </div>
-                      </div>
+              {{-- <div class="col-md-12 col-xs-12 left-margin">
+                <div class="row x_title">
+                  <div class="col-md-6">
+                    <h3>Contents</h3>
+                  </div>
+                  <div class="x_content">
+                    <div class="table-responsive">
+                      <table id="inputTable" class="table table-striped jambo_table" width="100%">
+                        <thead>
+                          <tr class="headings">
+                            <th class="column-title" style="vertical-align: middle" width="25%">Item Code</th>
+                            <th class="column-title" style="vertical-align: middle" width="25%">Description</th>
+                            <th class="column-title" style="vertical-align: middle" width="10%">Quantity</th>
+                            <th class="column-title" style="vertical-align: middle">Line Remarks</th>
+                            <th class="column-title text-center" style="vertical-align: middle" width="5%"><button type="button" id="dynamic-ar" class="btn btn-primary"><i class="fa fa-plus"></i></button></th>
+                          </tr>
+                        </thead>
+                      </table>
                     </div>
                   </div>
                 </div>
-              </div>
+              </div> --}}
               <div class="col-md-12 col-xs-12 left-margin">
                 <div class="form-group pull-right">
                   <button type="submit" class="btn btn-primary"><i class="fa fa-save"></i> Submit</button>
                 </div>
               </div>
-              <input type="hidden" name="url" value="{{ url()->previous() }}">
             </form>
           </div>
         </div>
@@ -160,6 +103,40 @@
     </div>
   </div>
 </div>
+
+<div id="itemModal" class="modal fade" tabindex="-1" role="dialog" data-backdrop="static" data-keyboard="false">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 class="modal-title">List of Items</h4>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="x_content">
+        <div class="modal-body">
+          <table id="datatable-serverside" class="table table-striped jambo_table" cellspacing="0" width="100%">
+            <thead>
+              <tr class="headings">
+                <th class="column-title" width="1%" class="text-center">Action</th>
+                <th class="column-title">Item Code</th>
+                <th class="column-title">Description</th>
+                <th class="column-title">Stock</th>
+                {{-- <th class="column-title">Type</th> --}}
+                <th class="column-title">Group</th>
+                <th class="column-title">Status</th>
+              </tr>
+            </thead>
+          </table>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 @endsection
 
 @section('styles')
@@ -167,6 +144,14 @@
 <link href="{{ asset('assets/vendors/iCheck/skins/flat/green.css') }}" rel="stylesheet">
 <!-- Select2 -->
 <link href="{{ asset('assets/vendors/select2/dist/css/select2.min.css') }}" rel="stylesheet">
+<!-- Jquery UI -->
+<link href="{{ asset('assets/vendors/jquery-ui/jquery-ui.min.css') }}" rel="stylesheet">
+<!-- Datatables -->
+<link href="{{ asset('assets/vendors/datatables.net-bs/css/dataTables.bootstrap.min.css') }}" rel="stylesheet">
+<link href="{{ asset('assets/vendors/datatables.net-buttons-bs/css/buttons.bootstrap.min.css') }}" rel="stylesheet">
+<link href="{{ asset('assets/vendors/datatables.net-fixedheader-bs/css/fixedHeader.bootstrap.min.css') }}" rel="stylesheet">
+<link href="{{ asset('assets/vendors/datatables.net-responsive-bs/css/responsive.bootstrap.min.css') }}" rel="stylesheet">
+<link href="{{ asset('assets/vendors/datatables.net-scroller-bs/css/scroller.bootstrap.min.css') }}" rel="stylesheet">
 @endsection
 
 @section('scripts')
@@ -176,45 +161,302 @@
 <script src="{{ asset('assets/vendors/parsleyjs/dist/parsley.min.js') }}"></script>
 <!-- Select2 -->
 <script src="{{ asset('assets/vendors/select2/dist/js/select2.full.min.js') }}"></script>
+<!-- Jquery UI -->
+<script src="{{ asset('assets/vendors/jquery-ui/jquery-ui.js') }}"></script>
+<!-- Datatables -->
+<script src="{{ asset('assets/vendors/datatables.net/js/jquery.dataTables.min.js') }}"></script>
+<script src="{{ asset('assets/vendors/datatables.net-bs/js/dataTables.bootstrap.min.js') }}"></script>
+<script src="{{ asset('assets/vendors/datatables.net-buttons/js/dataTables.buttons.min.js') }}"></script>
+<script src="{{ asset('assets/vendors/datatables.net-buttons-bs/js/buttons.bootstrap.min.js') }}"></script>
+<script src="{{ asset('assets/vendors/datatables.net-buttons/js/buttons.flash.min.js') }}"></script>
+<script src="{{ asset('assets/vendors/datatables.net-buttons/js/buttons.html5.min.js') }}"></script>
+<script src="{{ asset('assets/vendors/datatables.net-buttons/js/buttons.print.min.js') }}"></script>
+<script src="{{ asset('assets/vendors/datatables.net-fixedheader/js/dataTables.fixedHeader.min.js') }}"></script>
+<script src="{{ asset('assets/vendors/datatables.net-keytable/js/dataTables.keyTable.min.js') }}"></script>
+<script src="{{ asset('assets/vendors/datatables.net-responsive/js/dataTables.responsive.min.js') }}"></script>
+<script src="{{ asset('assets/vendors/datatables.net-responsive-bs/js/responsive.bootstrap.js') }}"></script>
+<script src="{{ asset('assets/vendors/datatables.net-scroller/js/dataTables.scroller.min.js') }}"></script>
+<script src="{{ asset('assets/vendors/jszip/dist/jszip.min.js') }}"></script>
+<script src="{{ asset('assets/vendors/pdfmake/build/pdfmake.min.js') }}"></script>
+<script src="{{ asset('assets/vendors/pdfmake/build/vfs_fonts.js') }}"></script>
+{{-- <script src="{{ asset('assets/build/js/itemTransaction.js') }}"></script> --}}
 <script>
-  $(document).ready(function() {
-    $('.select2').select2();
+  // Set variabel global untuk data-type item transaction
+  // window.dataType = "gr";
 
-    $(document).on('select2:open', () => {
-      document.querySelector('.select2-search__field').focus();
-    })
-  });
-
-</script>
-<script>
   $(document).ready(function() {
-    // Populate type dropdown
-    $('#type').on('change', function() {
-      var type_id = $(this).val();
-      if (type_id) {
-        $.ajax({
-          url: "{{ route('groups.getGroupsFromTypes') }}"
-          , type: 'GET'
-          , data: {
-            id: type_id
-          }
-          , dataType: 'json'
-          , success: function(data) {
-            console.log(data);
-            $('#group').empty();
-            $('#group').append('<option value="">Select Group</option>');
-            $.each(data, function(key, value) {
-              $('#group').append('<option value="' + value.id + '">' + value.group_name + '</option>');
-            });
-          }
-        });
-      } else {
-        $('#group').empty();
-        $('#group').append('<option value="">Select Group</option>');
-      }
+    $(".select2").select2();
+
+    $(document).on("select2:open", () => {
+      document.querySelector(".select2-search__field").focus();
     });
+
+    // Variabel untuk melacak nomor baris
+    // addItemDetail(1); // Tambahkan baris pertama onload
+    // var rowCount = 2; // untuk row berikutnya saat di klik
+
+    // // Fungsi untuk menambahkan baris
+    // $("#dynamic-ar").on("click", function() {
+    //   addItemDetail(rowCount);
+    //   rowCount++; // Tingkatkan nomor baris setiap kali menambahkan baris
+    // });
+
+    // function addItemDetail(rowNumber) {
+    //   var tr = `<tr>
+    //                 <td>
+    //                 <div class="input-group">
+    //                     <input type="hidden" class="form-control item-id-${rowNumber}" name="item_id[${rowNumber}]" placeholder="${rowNumber}" required>
+    //                     <input type="text" class="form-control item-code-${rowNumber}" name="item_code[${rowNumber}]" required>
+    //                     <span class="input-group-btn">
+    //                     <button type="button" class="btn btn-primary search-item-${rowNumber}"><i class="fa fa-search"></i></button>
+    //                     </span>
+    //                 </div>
+    //                 </td>
+    //                 <td>
+    //                   <input type="hidden" class="form-control is-batch-${rowNumber}" readonly>
+    //                   <input type="text" class="form-control description-${rowNumber}" readonly>
+    //                 </td>
+    //                 <td><input type="number" class="form-control gr-qty-${rowNumber}" name="gr_qty[${rowNumber}]" required data-parsley-min="1"></td>
+    //                 <td><input type="text" class="form-control gr-line-remarks-${rowNumber}" name="gr_line_remarks[${rowNumber}]" required></td>
+    //                 <td class="text-center"><button type="button" class="btn btn-danger remove-input-field-${rowNumber}"><i class="fa fa-times"></i></button></td>
+    //             </tr>`;
+    //   $("#inputTable").append(tr);
+
+    //   // Tambahkan event handler untuk menghapus baris
+    //   $(document).on("click", `.remove-input-field-${rowNumber}`, function() {
+    //     $(this).parents("tr").remove();
+    //     updateRowNumbers();
+    //   });
+
+    //   function updateRowNumbers() {
+    //     var newRowNumber = 1;
+    //     $("#inputTable tr").each(function() {
+    //       $(this)
+    //         .find(`.item-id-${newRowNumber}`)
+    //         .attr("name", `item_id[${newRowNumber}]`);
+    //       $(this)
+    //         .find(`.item-code-${newRowNumber}`)
+    //         .attr("name", `item_code[${newRowNumber}]`);
+    //       $(this)
+    //         .find(`.gr-qty-${newRowNumber}`)
+    //         .attr("name", `gr_qty[${newRowNumber}]`);
+    //       $(this)
+    //         .find(`.gr-line-remarks-${newRowNumber}`)
+    //         .attr("name", `gr_line_remarks[${newRowNumber}]`);
+    //       newRowNumber++;
+    //     });
+    //   }
+
+    //   // Inisialisasi autocomplete pada elemen "item-code" dalam baris baru
+    //   var newRowItemCode = $(`#inputTable tr:last .item-code-${rowNumber}`);
+    //   initializeAutocomplete(newRowItemCode, rowNumber);
+
+    //   // AUTOCOMPLETE METHOD
+    //   $(document).on("input", `.item-code-${rowNumber}`, function() {
+    //     var inputElement = $(this);
+    //     var inputText = inputElement.val();
+
+    //     // Temukan elemen item yang sesuai dalam baris yang sama
+    //     var itemIDElement = inputElement.siblings(`.item-id-${rowNumber}`);
+    //     var itemCodeElement = inputElement.siblings(
+    //       `.item-code-${rowNumber}`
+    //     );
+    //     var descriptionElement = inputElement.siblings(
+    //       `.description-${rowNumber}`
+    //     );
+    //     var isBatchElement = inputElement.siblings(
+    //       `.is-batch-${rowNumber}`
+    //     );
+
+    //     // Lakukan AJAX request untuk mencari item berdasarkan inputText
+    //     $.ajax({
+    //       url: "{{ route('items.searchItemByCode') }}"
+    //         // url: "http://localhost/bh-inventory/items/searchItemByCode"
+    //       , type: "get"
+    //       , dataType: "json"
+    //       , data: {
+    //         item_code: inputText
+    //       , }
+    //       , success: function(data) {
+    //         if (data) {
+    //           var items = [];
+    //           for (var i = 0; i < data.length; i++) {
+    //             items.push({
+    //               id: data[i].id
+    //               , label: data[i].item_code
+    //               , desc: data[i].description
+    //               , is_batch: data[i].is_batch
+    //             , });
+    //           }
+
+    //           // Setel sumber data autocomplete untuk elemen yang sesuai dalam baris yang sama
+    //           initializeAutocomplete(inputElement, rowNumber);
+    //           inputElement.autocomplete("option", "source", items);
+
+    //           // Setel nilai item-id dan description yang sesuai dalam baris yang berbeda
+    //           itemIDElement.val(data[0].id);
+    //           itemCodeElement.val(data[0].label);
+    //           descriptionElement.val(data[0].description);
+    //           isBatchElement.val(data[0].is_batch);
+    //         } else {
+    //           // Jika item tidak ditemukan, kosongkan sumber data autocomplete
+    //           inputElement.autocomplete("option", "source", []);
+
+    //           // Kosongkan nilai item-id dan description dalam baris yang sama
+    //           itemIDElement.val("");
+    //           itemCodeElement.val("");
+    //           descriptionElement.val("");
+    //           isBatchElement.val("");
+    //         }
+    //       }
+    //     , });
+    //   });
+
+    //   // LIST ALL ITEM FROM MODAL AND DATATABLE METHOD
+    //   $(document).on("click", `.search-item-${rowNumber}`, function() {
+    //     $("#itemModal").modal("show");
+    //     var warehouseId = $('#warehouse_id').val();
+    //     listItem(rowNumber, warehouseId);
+    //   });
+
+    //   // Handle item selection in the modal and update the corresponding row
+    //   $("#datatable-serverside").on(
+    //     "click"
+    //     , `button.pick-item-${rowNumber}`
+    //     , function() {
+    //       var itemID = $(this).data("item-id");
+    //       var itemCode = $(this).data("item-code");
+    //       var description = $(this).data("description");
+    //       var is_batch = $(this).data("is-batch");
+
+    //       // Update nilai item-id, item-code, dan description
+    //       $(`.item-id-${rowNumber}`).val(itemID);
+    //       $(`.item-code-${rowNumber}`).val(itemCode);
+    //       $(`.description-${rowNumber}`).val(description);
+    //       $(`.is-batch-${rowNumber}`).val(is_batch);
+
+    //       // Sembunyikan modal setelah memilih item
+    //       $("#itemModal").modal("hide");
+    //       $(`.item-code-${rowNumber}`).focus();
+    //     }
+    //   );
+    // }
+
+    // // Fungsi autocomplete yang dapat digunakan kembali
+    // function initializeAutocomplete(elements, rowNumber) {
+    //   elements.autocomplete({
+    //     minLength: 0
+    //     , source: []
+    //     , focus: function(event, ui) {
+    //       elements.val(ui.item.label);
+    //       return false;
+    //     }
+    //     , select: function(event, ui) {
+    //       var itemIDElement = elements.siblings(`.item-id-${rowNumber}`);
+    //       var itemCodeElement = elements.siblings(`.item-code-${rowNumber}`);
+    //       var descriptionElement = elements.siblings(`.description-${rowNumber}`);
+    //       var isBatchElement = elements.siblings(`.is-batch-${rowNumber}`);
+
+    //       // Setel nilai .description dalam <td> yang berbeda
+    //       var descriptionElementInRow = elements.closest("tr").find(`.description-${rowNumber}`);
+    //       descriptionElementInRow.val(ui.item.desc);
+
+    //       // Setel nilai .is-batch dalam <td> yang berbeda
+    //       var isBatchElementInRow = elements.closest("tr").find(`.is-batch-${rowNumber}`);
+    //       isBatchElementInRow.val(ui.item.is_batch);
+
+    //       itemIDElement.val(ui.item.id);
+    //       itemCodeElement.val(ui.item.label);
+    //       descriptionElement.val(ui.item.desc);
+    //       isBatchElement.val(ui.item.is_batch);
+
+    //       return false;
+    //     }
+    //   , }).autocomplete("instance")._renderItem = function(ul, item) {
+    //     return $("<li>")
+    //       .addClass("autocomplete-item")
+    //       .append("<div>" + item.label + "<br>" + item.desc + "</div>")
+    //       .appendTo(ul);
+    //   };
+    // }
+
+    // // datatable serverside list item
+    // function listItem(rowNumber, warehouseId) {
+    //   var table = $("#datatable-serverside").DataTable({
+    //     responsive: true
+    //     , autoWidth: true
+    //     , lengthChange: true
+    //     , lengthMenu: [
+    //       [10, 25, 50, 100, -1]
+    //       , ["10", "25", "50", "100", "Show all"]
+    //     , ]
+    //     , dom: "lfrtpi"
+    //     , processing: true
+    //     , serverSide: true
+    //     , ajax: {
+    //       url: "{{ route('items.dataForTransaction') }}"
+    //         // url: "http://localhost/bh-inventory/items/dataForTransaction"
+    //       , data: function(d) {
+    //         d.warehouseId = warehouseId;
+    //         d.search = $(
+    //           "input[type=search][aria-controls=datatable-serverside]"
+    //         ).val();
+    //         // console.log(d);
+    //       }
+    //     , }
+    //     , columns: [{
+    //         data: "action"
+    //         , name: "action"
+    //         , orderable: false
+    //         , searchable: false
+    //         , className: "text-center"
+    //         , render: function(data, type, row, meta) {
+    //           var itemId = row.id;
+    //           var itemCode = row.item_code;
+    //           var description = row.description;
+    //           // var is_batch = row.is_batch;
+
+    //           return `<button class="btn btn-sm btn-info pick-item-${rowNumber}" data-item-id="${itemId}" data-item-code="${itemCode}" data-description="${description}"><i class="fa fa-check-square-o"></i> Pick!</button>`;
+    //         }
+    //       , }
+    //       , {
+    //         data: "item_code"
+    //         , name: "item_code"
+    //         , orderable: false
+    //       , }
+    //       , {
+    //         data: "description"
+    //         , name: "description"
+    //         , orderable: false
+    //       , }
+    //       , {
+    //         data: "stock"
+    //         , name: "stock"
+    //         , orderable: false
+    //         , className: "text-right"
+    //       , }
+    //       // , {
+    //       //   data: "type_name"
+    //       //   , name: "type_name"
+    //       //   , orderable: false
+    //       // , }
+    //       , {
+    //         data: "group_name"
+    //         , name: "group_name"
+    //         , orderable: false
+    //       , }
+    //       , {
+    //         data: "item_status"
+    //         , name: "item_status"
+    //         , orderable: false
+    //         , className: "text-center"
+    //       , }
+    //     , ]
+    //     , fixedColumns: true
+    //     , destroy: true, // agar tidak reinitialize setiap kali listItem dipanggil
+    //   });
+    // }
   });
 
 </script>
-
 @endsection

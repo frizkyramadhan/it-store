@@ -18,6 +18,7 @@
             <h2>{{ $subtitle }}</h2>
             <ul class="nav navbar-right panel_toolbox">
               <a href="{{ url('goodissues') }}" class="btn btn-success"><i class="fa fa-arrow-circle-left"></i> Back</a>
+              <a href="{{ url('goodissues/' . $goodissue->id . '/edit') }}" class="btn btn-warning"><i class="fa fa-pencil"></i> Edit</a>
             </ul>
             <div class="clearfix"></div>
           </div>
@@ -45,23 +46,38 @@
                 <label>Posting Date <span class="required">*</span></label>
                 <input type="text" class="form-control" name="gi_posting_date" value="{{ $goodissue->gi_posting_date }}" readonly>
               </div>
-            </div>
-            <div class="col-md-6 col-xs-12 left-margin">
               <div class="form-group">
                 <label>Warehouse <span class="required">*</span></label>
                 <input type="text" class="form-control" name="warehouse_id" value="{{ $goodissue->warehouse->warehouse_name }}" readonly>
               </div>
               <div class="form-group">
+                <label>Project <span class="required">*</span></label>
+                <input type="text" class="form-control" name="project_id" value="{{ $goodissue->project->project_code ?? "" }} - {{ $goodissue->project->project_name ?? "" }}" readonly>
+              </div>
+            </div>
+            <div class="col-md-6 col-xs-12 left-margin">
+              <div class="form-group">
+                <label>Issue Purpose <span class="required">*</span></label>
+                <input type="text" class="form-control" name="issue_purpose_id" value="{{ $goodissue->issuepurpose->purpose_name ?? "" }}" readonly>
+              </div>
+              <div class="form-group">
+                <label>IT WO Reference</label>
+                <div class="input-group">
+                  <input @if($goodissue->it_wo_id) id="it_wo_id" @endif type="text" class="form-control" value="{{ $goodissue->it_wo_id }}" readonly />
+                  <span class="input-group-btn">
+                    <button id="itwoDetail" class="btn btn-primary" type="button" data-wo-id="{{ $goodissue->it_wo_id }}" data-toggle="modal" data-target="#itwoModal">Detail</button>
+                  </span>
+                </div>
+              </div>
+              <div class="form-group">
                 <label>Remarks</label>
-                <textarea class="form-control" rows="3" name="gi_remarks" readonly> {{ $goodissue->gi_remarks }}</textarea>
+                <textarea class="form-control" rows="4" name="gi_remarks" readonly> {{ $goodissue->gi_remarks }}</textarea>
               </div>
             </div>
             <div class="col-md-12 col-xs-12 left-margin">
-              <div class="x_panel">
-                <div class="x_title">
-                  <h2>Good Issue Detail</h2>
-                  <ul class="nav navbar-right panel_toolbox"></ul>
-                  <div class="clearfix"></div>
+              <div class="row x_title">
+                <div class="col-md-6">
+                  <h3>Contents</h3>
                 </div>
                 <div class="x_content">
                   <div class="table-responsive">
@@ -70,7 +86,9 @@
                         <tr class="headings">
                           <th class="column-title" style="vertical-align: middle" width="15%">Item Code</th>
                           <th class="column-title" style="vertical-align: middle" width="35%" colspan="3">Description</th>
-                          <th class="column-title text-center" style="vertical-align: middle" width="10%">Qty</th>
+                          <th class="column-title text-right" style="vertical-align: middle" width="10%">Qty</th>
+                          <th class="column-title text-right" style="vertical-align: middle" width="10%">Price (IDR)</th>
+                          <th class="column-title text-right" style="vertical-align: middle" width="10%">Total</th>
                           <th class="column-title" style="vertical-align: middle" colspan="2">Line Remarks</th>
                         </tr>
                       </thead>
@@ -83,8 +101,14 @@
                           <td colspan="3">
                             <h5>{{ $gidetail->item->description }}</h5>
                           </td>
-                          <td class="text-center">
+                          <td class="text-right">
                             <h5>{{ $gidetail->gi_qty }}</h5>
+                          </td>
+                          <td class="text-right">
+                            <h5>{{ $gidetail->price }}</h5>
+                          </td>
+                          <td class="text-right">
+                            <h5>{{ $gidetail->gi_line_total }}</h5>
                           </td>
                           <td colspan="2">
                             <h5>{{ $gidetail->gi_line_remarks }}</h5>
@@ -125,6 +149,10 @@
                       @endforeach
                     </table>
                     {{-- @dd($batches) --}}
+                    <div class="form-group text-right">
+                      <label>Total Cost (IDR)</label>
+                      <h3>{{ $goodissue->total_cost ?? '0.00' }}</h3>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -132,6 +160,26 @@
           </div>
         </div>
       </div>
+    </div>
+  </div>
+</div>
+
+<div id="itwoModal" class="modal fade" tabindex="-1" role="dialog" data-backdrop="static" data-keyboard="false">
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content">
+
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">×</span>
+        </button>
+        <h4 class="modal-title">IT WO Detail</h4>
+      </div>
+      <div class="modal-body">
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+      </div>
+
     </div>
   </div>
 </div>
@@ -211,207 +259,106 @@
 <script src="{{ asset('assets/vendors/jszip/dist/jszip.min.js') }}"></script>
 <script src="{{ asset('assets/vendors/pdfmake/build/pdfmake.min.js') }}"></script>
 <script src="{{ asset('assets/vendors/pdfmake/build/vfs_fonts.js') }}"></script>
-{{-- <script src="{{ asset('assets/build/js/itemTransaction.js') }}"></script> --}}
-{{-- <script>
-  // Set variabel global untuk data-type item transaction
-  // window.dataType = "gr";
 
+<script>
   $(document).ready(function() {
-    $(".select2").select2();
+    var goodIssue = {
+      itWoId: '{{ $goodissue->it_wo_id }}'
+      , itWoNo: '{{ $goodissue->it_wo_no }}'
+    };
 
-    $(document).on("select2:open", () => {
-      document.querySelector(".select2-search__field").focus();
-    });
-
-    // Variabel untuk melacak nomor baris
-    addItemDetail(1); // Tambahkan baris pertama onload
-    var rowCount = 2; // untuk row berikutnya saat di klik
-
-    // Fungsi untuk menambahkan baris
-    $("#dynamic-ar").on("click", function() {
-      addItemDetail(rowCount);
-      rowCount++; // Tingkatkan nomor baris setiap kali menambahkan baris
-    });
-
-    function addItemDetail(rowNumber) {
-      var tr = `<tr>
-                    <td>
-                    <div class="input-group">
-                        <input type="hidden" class="form-control item-id-${rowNumber}" name="item_id[${rowNumber}]" placeholder="${rowNumber}" required>
-                        <input type="text" class="form-control item-code-${rowNumber}" name="item_code[${rowNumber}]" required>
-                        <span class="input-group-btn">
-                        <button type="button" class="btn btn-primary search-item-${rowNumber}"><i class="fa fa-search"></i></button>
-                        </span>
-                    </div>
-                    </td>
-                    <td>
-                      <input type="hidden" class="form-control is-batch-${rowNumber}" readonly>
-                      <input type="text" class="form-control description-${rowNumber}" readonly>
-                    </td>
-                    <td><input type="number" class="form-control gr-qty-${rowNumber}" name="gi_qty[${rowNumber}]" required data-parsley-min="1"></td>
-                    <td><input type="text" class="form-control gr-line-remarks-${rowNumber}" name="gi_line_remarks[${rowNumber}]" required></td>
-                    <td class="text-center"><button type="button" class="btn btn-danger remove-input-field-${rowNumber}"><i class="fa fa-times"></i></button></td>
-                </tr>`;
-      $("#inputTable").append(tr);
-
-      // Tambahkan event handler untuk menghapus baris
-      $(document).on("click", `.remove-input-field-${rowNumber}`, function() {
-        $(this).parents("tr").remove();
-        updateRowNumbers();
+    // Fungsi untuk mengambil data IT WO dari API
+    function fetchItwoData(id, callback) {
+      // Mengambil data IT WO
+      $.ajax({
+        url: 'http://192.168.32.37/arka-rest-server/api/it_wo_store/'
+        , type: 'GET'
+        , dataType: 'json'
+        , data: {
+          'arka-key': 'arka123'
+          , 'id_wo': id
+        }
+        , success: function(result) {
+          if (result.status === true && result.data.length > 0) {
+            callback(result.data[0]); // Mengembalikan data IT WO ke callback
+          } else {
+            console.error('Data IT WO tidak ditemukan.');
+          }
+        }
+        , error: function() {
+          console.error('Error saat mengambil data IT WO.');
+        }
       });
-
-      function updateRowNumbers() {
-        var newRowNumber = 1;
-        $("#inputTable tr").each(function() {
-          $(this)
-            .find(`.item-id-${newRowNumber}`)
-            .attr("name", `item_id[${newRowNumber}]`);
-          $(this)
-            .find(`.item-code-${newRowNumber}`)
-            .attr("name", `item_code[${newRowNumber}]`);
-          $(this)
-            .find(`.gr-qty-${newRowNumber}`)
-            .attr("name", `gi_qty[${newRowNumber}]`);
-          $(this)
-            .find(`.gr-line-remarks-${newRowNumber}`)
-            .attr("name", `gi_line_remarks[${newRowNumber}]`);
-          newRowNumber++;
-        });
-      }
-
-      // Inisialisasi autocomplete pada elemen "item-code" dalam baris baru
-      var newRowItemCode = $(`#inputTable tr:last .item-code-${rowNumber}`);
-      initializeAutocomplete(newRowItemCode, rowNumber);
-
-      // AUTOCOMPLETE METHOD
-      $(document).on("input", `.item-code-${rowNumber}`, function() {
-        var inputElement = $(this);
-        var inputText = inputElement.val();
-
-        // Temukan elemen item yang sesuai dalam baris yang sama
-        var itemIDElement = inputElement.siblings(`.item-id-${rowNumber}`);
-        var itemCodeElement = inputElement.siblings(
-          `.item-code-${rowNumber}`
-        );
-        var descriptionElement = inputElement.siblings(
-          `.description-${rowNumber}`
-        );
-        var isBatchElement = inputElement.siblings(
-          `.is-batch-${rowNumber}`
-        );
-
-        // Lakukan AJAX request untuk mencari item berdasarkan inputText
-        $.ajax({
-          url: "{{ route('items.searchItemByCode') }}"
-// url: "http://localhost/bh-inventory/items/searchItemByCode"
-, type: "get"
-, dataType: "json"
-, data: {
-item_code: inputText
-, }
-, success: function(data) {
-if (data) {
-var items = [];
-for (var i = 0; i < data.length; i++) { items.push({ id: data[i].id , label: data[i].item_code , desc: data[i].description , is_batch: data[i].is_batch , }); } // Setel sumber data autocomplete untuk elemen yang sesuai dalam baris yang sama initializeAutocomplete(inputElement, rowNumber); inputElement.autocomplete("option", "source" , items); // Setel nilai item-id dan description yang sesuai dalam baris yang berbeda itemIDElement.val(data[0].id); itemCodeElement.val(data[0].label); descriptionElement.val(data[0].description); isBatchElement.val(data[0].is_batch); } else { // Jika item tidak ditemukan, kosongkan sumber data autocomplete inputElement.autocomplete("option", "source" , []); // Kosongkan nilai item-id dan description dalam baris yang sama itemIDElement.val(""); itemCodeElement.val(""); descriptionElement.val(""); isBatchElement.val(""); } } , }); }); // LIST ALL ITEM FROM MODAL AND DATATABLE METHOD $(document).on("click", `.search-item-${rowNumber}`, function() { $("#itemModal").modal("show"); var warehouseId=$('#warehouse_id').val(); listItem(rowNumber, warehouseId); }); // Handle item selection in the modal and update the corresponding row $("#datatable-serverside").on( "click" , `button.pick-item-${rowNumber}` , function() { var itemID=$(this).data("item-id"); var itemCode=$(this).data("item-code"); var description=$(this).data("description"); var is_batch=$(this).data("is-batch"); // Update nilai item-id, item-code, dan description $(`.item-id-${rowNumber}`).val(itemID); $(`.item-code-${rowNumber}`).val(itemCode); $(`.description-${rowNumber}`).val(description); $(`.is-batch-${rowNumber}`).val(is_batch); // Sembunyikan modal setelah memilih item $("#itemModal").modal("hide"); $(`.item-code-${rowNumber}`).focus(); } ); } // Fungsi autocomplete yang dapat digunakan kembali function initializeAutocomplete(elements, rowNumber) { elements.autocomplete({ minLength: 0 , source: [] , focus: function(event, ui) { elements.val(ui.item.label); return false; } , select: function(event, ui) { var itemIDElement=elements.siblings(`.item-id-${rowNumber}`); var itemCodeElement=elements.siblings(`.item-code-${rowNumber}`); var descriptionElement=elements.siblings(`.description-${rowNumber}`); var isBatchElement=elements.siblings(`.is-batch-${rowNumber}`); // Setel nilai .description dalam <td> yang berbeda
-  var descriptionElementInRow = elements.closest("tr").find(`.description-${rowNumber}`);
-  descriptionElementInRow.val(ui.item.desc);
-
-  // Setel nilai .is-batch dalam <td> yang berbeda
-    var isBatchElementInRow = elements.closest("tr").find(`.is-batch-${rowNumber}`);
-    isBatchElementInRow.val(ui.item.is_batch);
-
-    itemIDElement.val(ui.item.id);
-    itemCodeElement.val(ui.item.label);
-    descriptionElement.val(ui.item.desc);
-    isBatchElement.val(ui.item.is_batch);
-
-    return false;
     }
-    , }).autocomplete("instance")._renderItem = function(ul, item) {
-    return $("<li>")
-      .addClass("autocomplete-item")
-      .append("<div>" + item.label + "<br>" + item.desc + "</div>")
-      .appendTo(ul);
-      };
+
+    // Ketika halaman selesai dimuat, ambil data dan set nilai ke form
+    fetchItwoData(goodIssue.itWoId, function(data) {
+      $('#it_wo_id').val(data.no_wo);
+    });
+
+    // Ketika modal dibuka, tampilkan data yang sesuai
+    $('#itwoModal').on('show.bs.modal', function(event) {
+      var button = $(event.relatedTarget);
+      var id = button.data('wo-id');
+      var modal = $(this);
+
+      if (id) {
+        // Ambil data IT WO dan tampilkan di modal
+        fetchItwoData(id, function(data) {
+          modal.find('.modal-body').html(`
+          <table class="table table-striped">
+            <tr>
+              <th>No</th>
+              <td>:</td>
+              <td>${data.no_wo}</td>
+            </tr>
+            <tr>
+              <th>Date</th>
+              <td>:</td>
+              <td>${data.date}</td>
+            </tr>
+            <tr>
+              <th>NIK</th>
+              <td>:</td>
+              <td>${data.nik}</td>
+            </tr>
+            <tr>
+              <th>Name</th>
+              <td>:</td>
+              <td>${data.name}</td>
+            </tr>
+            <tr>
+              <th>Project</th>
+              <td>:</td>
+              <td>${data.kode_project} - ${data.nama_project}</td>
+            </tr>
+            <tr>
+              <th>Issue</th>
+              <td>:</td>
+              <td>${data.issue}</td>
+            </tr>
+            <tr>
+              <th>Status</th>
+              <td>:</td>
+              <td>${data.status}</td>
+            </tr>
+          </table>
+        `);
+        });
+      } else {
+        modal.find('.modal-body').html(`
+        <table class="table table-striped">
+            <tr>
+              <th class="text-center text-danger">IT WO is not available</th>
+            </tr>
+          </table>
+        `);
       }
 
-      // datatable serverside list item
-      function listItem(rowNumber, warehouseId) {
-      var table = $("#datatable-serverside").DataTable({
-      responsive: true
-      , autoWidth: true
-      , lengthChange: true
-      , lengthMenu: [
-      [10, 25, 50, 100, -1]
-      , ["10", "25", "50", "100", "Show all"]
-      , ]
-      , dom: "lfrtpi"
-      , processing: true
-      , serverSide: true
-      , ajax: {
-      url: "{{ route('items.dataForTransaction') }}"
-      // url: "http://localhost/bh-inventory/items/dataForTransaction"
-      , data: function(d) {
-      d.warehouseId = warehouseId;
-      d.search = $(
-      "input[type=search][aria-controls=datatable-serverside]"
-      ).val();
-      // console.log(d);
-      }
-      , }
-      , columns: [{
-      data: "action"
-      , name: "action"
-      , orderable: false
-      , searchable: false
-      , className: "text-center"
-      , render: function(data, type, row, meta) {
-      var itemId = row.id;
-      var itemCode = row.item_code;
-      var description = row.description;
-      var is_batch = row.is_batch;
+    });
+  });
 
-      return `<button class="btn btn-sm btn-info pick-item-${rowNumber}" data-item-id="${itemId}" data-item-code="${itemCode}" data-description="${description}" data-is-batch="${is_batch}"><i class="fa fa-check-square-o"></i> Pick!</button>`;
-      }
-      , }
-      , {
-      data: "item_code"
-      , name: "item_code"
-      , orderable: false
-      , }
-      , {
-      data: "description"
-      , name: "description"
-      , orderable: false
-      , }
-      , {
-      data: "stock"
-      , name: "stock"
-      , orderable: false
-      , className: "text-right"
-      , }
-      , {
-      data: "type_name"
-      , name: "type_name"
-      , orderable: false
-      , }
-      , {
-      data: "group_name"
-      , name: "group_name"
-      , orderable: false
-      , }
-      , {
-      data: "item_status"
-      , name: "item_status"
-      , orderable: false
-      , className: "text-center"
-      , }
-      , ]
-      , fixedColumns: true
-      , destroy: true, // agar tidak reinitialize setiap kali listItem dipanggil
-      });
-      }
-      });
+</script>
 
-      </script> --}}
-      @endsection
+
+@endsection

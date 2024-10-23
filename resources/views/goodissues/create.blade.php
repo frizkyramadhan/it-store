@@ -47,8 +47,6 @@
                   <label>Posting Date <span class="required">*</span></label>
                   <input type="date" class="form-control" name="gi_posting_date" value="{{ $sessionData ? $sessionData['gi']['gi_posting_date'] : date('Y-m-d') }}" required>
                 </div>
-              </div>
-              <div class="col-md-6 col-xs-12 left-margin">
                 <div class="form-group">
                   <label>Warehouse <span class="required">*</span></label>
                   <select id="warehouse_id" class="select2 form-control" name="warehouse_id" style="width: 100%" required>
@@ -59,30 +57,68 @@
                   </select>
                 </div>
                 <div class="form-group">
-                  <label>Remarks</label>
-                  <textarea class="form-control" rows="3" name="gi_remarks">{{ $sessionData ? $sessionData['gi']['gi_remarks'] : ""}}</textarea>
-                  <input type="hidden" class="form-control" name="gi_status" value="open" />
+                  <label>Project <span class="required">*</span></label>
+                  <select id="project_id" class="select2 form-control" name="project_id" style="width: 100%" required>
+                    <option value="">Select Project</option>
+                    @foreach ($projects as $project)
+                    <option value="{{ $project->id }}" {{ $sessionData ? ($sessionData['gi']['project_id'] == $project->id ? "selected" : "") : "" }}>{{ $project->project_code }} - {{ $project->project_name }}</option>
+                    @endforeach
+                  </select>
                 </div>
               </div>
+              <div class="col-md-6 col-xs-12 left-margin">
+
+                <div class="form-group">
+                  <label>Issue Purpose <span class="required">*</span></label>
+                  <select id="issue_purpose_id" class="select2 form-control" name="issue_purpose_id" style="width: 100%" required>
+                    <option value="">Select Issue Purpose</option>
+                    @foreach ($issuepurposes as $issuepurpose)
+                    <option value="{{ $issuepurpose->id }}" {{ $sessionData ? ($sessionData['gi']['issue_purpose_id'] == $issuepurpose->id ? "selected" : "") : "" }}>{{ $issuepurpose->purpose_name }}</option>
+                    @endforeach
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label>IT WO Reference</label>
+                  <div class="input-group">
+                    <input type="text" class="form-control" id="it_wo_no" value="{{ $sessionData ? $sessionData['gi']['it_wo_no'] : "" }}" readonly />
+                    <input type="hidden" class="form-control" id="it_wo_id" name="it_wo_id" value="{{ $sessionData ? $sessionData['gi']['it_wo_id'] : "" }}" />
+                    <span class="input-group-btn">
+                      <button class="btn btn-primary" type="button" data-toggle="modal" data-target="#itwoModal">Search IT WO</button>
+                    </span>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label>Remarks</label>
+                  <textarea class="form-control" rows="4" name="gi_remarks" required>{{ $sessionData ? $sessionData['gi']['gi_remarks'] : ""}}</textarea>
+                </div>
+
+              </div>
               <div class="col-md-12 col-xs-12 left-margin">
-                <div class="x_panel">
-                  <div class="x_title">
-                    <h2>Good Issue Detail</h2>
-                    <ul class="nav navbar-right panel_toolbox"></ul>
-                    <div class="clearfix"></div>
+                <div class="row x_title">
+                  <div class="col-md-6">
+                    <h3>Contents</h3>
                   </div>
                   <div class="x_content">
-                    <table id="inputTable" class="table table-striped jambo_table">
-                      <thead>
-                        <tr class="headings">
-                          <th class="column-title" style="vertical-align: middle" width="25%">Item Code</th>
-                          <th class="column-title" style="vertical-align: middle" width="25%">Description</th>
-                          <th class="column-title" style="vertical-align: middle" width="10%">Quantity</th>
-                          <th class="column-title" style="vertical-align: middle">Line Remarks</th>
-                          <th class="column-title" style="vertical-align: middle" width="5%"><button type="button" id="dynamic-ar" class="btn btn-primary"><i class="fa fa-plus"></i></button></th>
-                        </tr>
-                      </thead>
-                    </table>
+                    <div class="table-responsive">
+                      <table id="inputTable" class="table table-striped jambo_table" width="100%">
+                        <thead>
+                          <tr class="headings">
+                            <th class="column-title" style="vertical-align: middle" width="25%">Item Code</th>
+                            <th class="column-title" style="vertical-align: middle" width="25%">Description</th>
+                            <th class="column-title" style="vertical-align: middle" width="10%">Quantity</th>
+                            <th class="column-title" style="vertical-align: middle" width="10%">Price (IDR)</th>
+                            <th class="column-title" style="vertical-align: middle" width="10%">Total</th>
+                            <th class="column-title" style="vertical-align: middle">Line Remarks</th>
+                            <th class="column-title text-center" style="vertical-align: middle" width="5%"><button type="button" id="dynamic-ar" class="btn btn-primary"><i class="fa fa-plus"></i></button></th>
+                          </tr>
+                        </thead>
+                      </table>
+                      <div class="form-group text-right">
+                        <label>Total Cost (IDR)</label>
+                        <input id="total_cost" type="number" class="form-control" name="total_cost" readonly />
+                        <input type="hidden" class="form-control" name="gi_status" value="open" />
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -95,6 +131,78 @@
           </div>
         </div>
       </div>
+    </div>
+  </div>
+</div>
+
+
+
+<div id="itwoModal" class="modal fade" tabindex="-1" role="dialog" data-backdrop="static" data-keyboard="false">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">×</span>
+        </button>
+        <h4 class="modal-title">Search IT WO</h4>
+      </div>
+      <div class="modal-body">
+        <div class="col-md-3 col-sm-12 col-xs-12 form-group">
+          <input id="date" type="date" name="date" placeholder="Date" class="form-control" value="{{ @$post['date'] }}">
+        </div>
+        <div class="col-md-3 col-sm-12 col-xs-12 form-group">
+          {{-- <input id="kode_project" type="text" name="kode_project" placeholder="Project" class="form-control" value="{{ @$post['kode_project'] }}"> --}}
+          <select id="kode_project" class="form-control" name="kode_project" style="width: 100%">
+            <option value="">Select Project</option>
+            @foreach ($projects as $project)
+            <option value="{{ $project->project_code }}">{{ $project->project_code }} - {{ $project->project_name }}</option>
+            @endforeach
+          </select>
+        </div>
+
+        <div class="col-md-3 col-sm-12 col-xs-12 form-group">
+          <input id="nik" type="text" name="nik" placeholder="NIK" class="form-control" value="{{ @$post['nik'] }}">
+        </div>
+
+        <div class="col-md-3 col-sm-12 col-xs-12 form-group">
+          <input id="name" type="text" name="name" placeholder="Name" class="form-control" value="{{ @$post['name'] }}">
+        </div>
+
+        <div class="col-md-3 col-sm-12 col-xs-12 form-group">
+          <input id="no_wo" type="text" name="no_wo" placeholder="IT WO No." class="form-control" value="{{ @$post['no_wo'] }}">
+        </div>
+
+        <div class="col-md-3 col-sm-12 col-xs-12 form-group">
+          <input id="issue" type="text" name="issue" placeholder="Issue" class="form-control" value="{{ @$post['issue'] }}">
+        </div>
+
+        <div class="col-md-3 col-sm-12 col-xs-12 form-group">
+          {{-- <input id="status" type="text" name="status" placeholder="Status" class="form-control" value="{{ @$post['status'] }}"> --}}
+          <select id="status" name="status" class="form-control">
+            <option value="">Select Status</option>
+            <option value="waiting" {{ @$post['status'] == 'waiting' ? 'selected' : '' }}>Waiting</option>
+            <option value="process" {{ @$post['status'] == 'process' ? 'selected' : '' }}>Process</option>
+            <option value="finished" {{ @$post['status'] == 'finished' ? 'selected' : '' }}>Finished</option>
+            <option value="canceled" {{ @$post['status'] == 'canceled' ? 'selected' : '' }}>Canceled</option>
+          </select>
+        </div>
+
+        <div class="col-md-3 col-sm-12 col-xs-12 form-group">
+          <div class="text-center">
+            <button id="search_button" type="submit" class="btn btn-success">Search</button>
+            <button id="reset_button" class="btn btn-primary" type="reset">Reset</button>
+          </div>
+        </div>
+
+        <div id="search_result">
+        </div>
+        <div id="error" class="col-md-12 col-sm-12 col-xs-12 form-group">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+      </div>
+
     </div>
   </div>
 </div>
@@ -147,6 +255,13 @@
 <link href="{{ asset('assets/vendors/datatables.net-fixedheader-bs/css/fixedHeader.bootstrap.min.css') }}" rel="stylesheet">
 <link href="{{ asset('assets/vendors/datatables.net-responsive-bs/css/responsive.bootstrap.min.css') }}" rel="stylesheet">
 <link href="{{ asset('assets/vendors/datatables.net-scroller-bs/css/scroller.bootstrap.min.css') }}" rel="stylesheet">
+
+<style>
+  input[type="number"] {
+    text-align: right;
+  }
+
+</style>
 @endsection
 
 @section('scripts')
@@ -196,6 +311,49 @@
       rowCount++; // Tingkatkan nomor baris setiap kali menambahkan baris
     });
 
+    // Fungsi untuk menghitung total pada setiap baris
+    function calculateLineTotal(rowNumber) {
+      var qty = parseFloat($(`.gi-qty-${rowNumber}`).val()) || 0;
+      var price = parseFloat($(`.price-${rowNumber}`).val()) || 0;
+      var total = qty * price;
+
+      // Update kolom gi_line_total dengan hasil perkalian
+      $(`.gi-line-total-${rowNumber}`).val(total.toFixed(2));
+
+      // Hitung ulang total semua baris
+      calculateTotalCost();
+    }
+
+    // Fungsi untuk menghitung total semua gi_line_total
+    function calculateTotalCost() {
+      var totalCost = 0;
+
+      // Debugging: Tampilkan elemen yang ditemukan
+      console.log("Elements found:");
+      $("[class*='gi-line-total-']").each(function() {
+        console.log($(this).val()); // Debugging: Cetak nilai setiap elemen
+        var lineTotal = parseFloat($(this).val()) || 0;
+        totalCost += lineTotal;
+      });
+
+      console.log("Total Cost:", totalCost); // Debugging: Tampilkan total biaya keseluruhan
+      $("#total_cost").val(totalCost.toFixed(2));
+    }
+
+
+    // Attach event listeners untuk gi_qty dan price pada setiap baris yang baru ditambahkan
+    function attachCalculationEvents(rowNumber) {
+      // Saat input gi_qty diubah
+      $(`.gi-qty-${rowNumber}`).on('keyup change', function() {
+        calculateLineTotal(rowNumber);
+      });
+
+      // Saat input price diubah
+      $(`.price-${rowNumber}`).on('keyup change', function() {
+        calculateLineTotal(rowNumber);
+      });
+    }
+
     function addItemDetail(rowNumber) {
       var tr = `<tr>
                     <td>
@@ -209,10 +367,18 @@
                     </td>
                     <td><input type="text" class="form-control description-${rowNumber}" readonly></td>
                     <td><input type="number" class="form-control gi-qty-${rowNumber}" name="gi_qty[${rowNumber}]" required data-parsley-min="1" data-parsley-trigger="keyup" data-parsley-checkstock${rowNumber}></td>
-                    <td><input type="text" class="form-control gi-line-remarks-${rowNumber}" name="gi_line_remarks[${rowNumber}]" required></td>
+                    <td><input type="number" class="form-control price-${rowNumber}" name="price[${rowNumber}]" required></td>
+                    <td><input type="number" class="form-control gi-line-total-${rowNumber}" name="gi_line_total[${rowNumber}]" readonly></td>
+                    <td><input type="text" class="form-control gi-line-remarks-${rowNumber}" name="gi_line_remarks[${rowNumber}]"></td>
                     <td><button type="button" class="btn btn-danger remove-input-field"><i class="fa fa-times"></i></button></td>
                 </tr>`;
       $("#inputTable").append(tr);
+
+      // Attach event untuk kalkulasi otomatis pada gi_qty dan price
+      attachCalculationEvents(rowNumber);
+
+      // Hitung ulang total setelah baris baru ditambahkan
+      calculateTotalCost();
 
       // Inisialisasi autocomplete pada elemen "item-code" dalam baris baru
       var newRowItemCode = $(`#inputTable tr:last .item-code-${rowNumber}`);
@@ -279,25 +445,35 @@
       $(document).on("click", ".remove-input-field", function() {
         $(this).parents("tr").remove();
         updateRowNumbers();
+        calculateTotalCost();
       });
 
       function updateRowNumbers() {
         var newRowNumber = 1;
         $("#inputTable tr").each(function() {
           $(this)
-            .find(`.item-id-${newRowNumber}`)
+            .find('.item-id-' + newRowNumber)
             .attr("name", `item_id[${newRowNumber}]`);
           $(this)
-            .find(`.item-code-${newRowNumber}`)
+            .find('.item-code-' + newRowNumber)
             .attr("name", `item_code[${newRowNumber}]`);
           $(this)
-            .find(`.gi-qty-${newRowNumber}`)
+            .find('.gi-qty-' + newRowNumber)
             .attr("name", `gi_qty[${newRowNumber}]`);
           $(this)
-            .find(`.gi-line-remarks-${newRowNumber}`)
+            .find('.price-' + newRowNumber)
+            .attr("name", `price[${newRowNumber}]`);
+          $(this)
+            .find('.gi-line-total-' + newRowNumber)
+            .attr("name", `gi_line_total[${newRowNumber}]`);
+          $(this)
+            .find('.gi-line-remarks-' + newRowNumber)
             .attr("name", `gi_line_remarks[${newRowNumber}]`);
           newRowNumber++;
         });
+
+        // Setelah update, hitung ulang total biaya
+        calculateTotalCost();
       }
 
       // Menambahkan event handler untuk tombol .search-item-${rowNumber} yang memunculkan modal #itemModal sesuai nomor urut
@@ -479,6 +655,127 @@
         , destroy: true, // agar tidak reinitialize setiap kali listItem dipanggil
       });
     }
+
+    $('#search_button').on('click', function() {
+      searchItwo();
+    });
+
+    // Pilih item ketika tombol "Pick!" diklik
+    $(document).on('click', '.pick-item', function() {
+      const woId = $(this).data('wo-id'); // Mengambil data ID IT WO
+      const woNo = $(this).data('wo-no'); // Mengambil data Nomor IT WO
+
+      // Set nilai input it_wo_id dan it_wo_no dengan item yang dipilih
+      $('#it_wo_id').val(woId);
+      $('#it_wo_no').val(woNo);
+
+      // Tutup modal setelah item dipilih
+      $('#itwoModal').modal('hide');
+    });
+
+    function searchItwo() {
+      $('#search_result').html(''); // Kosongkan hasil pencarian sebelumnya
+
+      $.ajax({
+        url: 'http://192.168.32.37/arka-rest-server/api/it_wo_store'
+        , type: 'GET'
+        , datatype: 'json'
+        , data: {
+          'arka-key': 'arka123'
+          , 'date': $('#date').val()
+          , 'kode_project': $('#kode_project').val()
+          , 'nik': $('#nik').val()
+          , 'name': $('#name').val()
+          , 'no_wo': $('#no_wo').val()
+          , 'issue': $('#issue').val()
+          , 'status': $('#status').val()
+        }
+        , success: function(result) {
+          if (result.status) {
+            const itwoList = result.data;
+            let html = '';
+
+            html += `
+          <div class="col-md-12 col-sm-12 col-xs-12 form-group">
+            <table class="table table-striped jambo_table" width="100%">
+            <thead>
+              <tr class="headings">
+                <th class="column-title" width="1%" class="text-center">Action</th>
+                <th class="column-title">Date</th>
+                <th class="column-title">Project</th>
+                <th class="column-title">NIK</th>
+                <th class="column-title">Name</th>
+                <th class="column-title">IT WO</th>
+                <th class="column-title">Issue</th>
+                <th class="column-title">Status</th>
+              </tr>
+            </thead>
+            <tbody>`;
+
+            // Looping untuk menambahkan baris data
+            $.each(itwoList, (i, data) => {
+              html += `
+            <tr>
+              <td class="text-center"><button class="btn btn-sm btn-info pick-item" data-wo-id="${data.id_wo}" data-wo-no="${data.no_wo}"><i class="fa fa-check-square-o"></i> Pick!</button></td>
+              <td>${data.date}</td>
+              <td>${data.kode_project}</td>
+              <td>${data.nik}</td>
+              <td>${data.name}</td>
+              <td>${data.no_wo}</td>
+              <td>${data.issue}</td>
+              <td class="text-center">${data.status}</td>
+            </tr>`;
+            });
+
+            html += `</tbody>
+          </table>
+          </div>`;
+
+            // Tampilkan hasil pencarian
+            $('#search_result').append(html);
+          } else {
+            $('#error').html(`
+            <div class="alert alert-warning alert-dismissible fade in" role="alert">
+              <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">×</span>
+              </button>
+              IT WO Not Found, Please Try Another Keyword!
+            </div>
+            `);
+          }
+        }
+      });
+    }
+
+    // function untuk reset
+    $('#reset_button').on('click', function() {
+      resetSearch();
+    });
+
+    function resetSearch() {
+      // Kosongkan semua input
+      $('#date').val('');
+      $('#kode_project').val('');
+      $('#nik').val('');
+      $('#name').val('');
+      $('#no_wo').val('');
+      $('#issue').val('');
+      $('#status').val('');
+
+      // Hapus hasil pencarian
+      $('#search_result').html('');
+      $('#error').html('');
+    }
+
+    // Agar semua inputan di dalam modal bisa disubmit dengan menekan enter
+    $('#itwoModal').find('input').each(function() {
+      $(this).on('keypress', function(e) {
+        if (e.which === 13) {
+          $('#search_button').click();
+        }
+      });
+    });
+
+
   });
 
 </script>

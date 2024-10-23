@@ -4,12 +4,15 @@ namespace App\Http\Controllers;
 
 use Carbon\Carbon;
 use App\Models\Item;
+use App\Models\Project;
 use App\Models\GiDetail;
 use App\Models\GoodIssue;
 use App\Models\Warehouse;
 use Illuminate\Support\Arr;
+use App\Models\IssuePurpose;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Session;
 use App\Http\Controllers\InventoryController;
 
@@ -31,8 +34,9 @@ class GoodIssueController extends Controller
     public function getGoodIssue(Request $request)
     {
         $goodissues = GoodIssue::leftJoin('warehouses', 'good_issues.warehouse_id', '=', 'warehouses.id')
+            ->leftJoin('projects', 'good_issues.project_id', '=', 'projects.id')
             ->leftJoin('users', 'good_issues.user_id', '=', 'users.id')
-            ->select('good_issues.*', 'warehouses.warehouse_name', 'users.name')
+            ->select('good_issues.*', 'warehouses.warehouse_name', 'projects.project_code', 'users.name')
             ->orderBy('gi_doc_num', 'desc');
 
         return datatables()->of($goodissues)
@@ -42,6 +46,9 @@ class GoodIssueController extends Controller
             })
             ->addColumn('gi_posting_date', function ($goodissues) {
                 return date('d-M-Y', strtotime($goodissues->gi_posting_date));
+            })
+            ->addColumn('project_code', function ($goodissues) {
+                return $goodissues->project_code;
             })
             ->addColumn('warehouse_name', function ($goodissues) {
                 return $goodissues->warehouse_name;
@@ -58,6 +65,7 @@ class GoodIssueController extends Controller
                         $search = $request->get('search');
                         $w->orWhere('gi_doc_num', 'LIKE', "%$search%")
                             ->orWhere('gi_posting_date', 'LIKE', "%$search%")
+                            ->orWhere('project_code', 'LIKE', "%$search%")
                             ->orWhere('warehouse_name', 'LIKE', "%$search%")
                             ->orWhere('gi_remarks', 'LIKE', "%$search%")
                             ->orWhere('name', 'LIKE', "%$search%");
@@ -76,11 +84,16 @@ class GoodIssueController extends Controller
     {
         $title = 'Inventory Transactions';
         $subtitle = 'Good Issue';
+
         $warehouses = Warehouse::with('bouwheer')
             ->where('warehouse_status', 'active')
             ->where('warehouse_type', 'main')
             ->orderBy('warehouse_name', 'asc')
             ->get();
+
+        $projects = Project::where('project_status', 'active')->orderBy('project_code', 'asc')->get();
+
+        $issuepurposes = IssuePurpose::where('purpose_status', 'active')->orderBy('purpose_name', 'asc')->get();
 
         $items = Item::where('item_status', 'active')->orderBy('item_code', 'asc')->get();
 
@@ -89,7 +102,7 @@ class GoodIssueController extends Controller
         // generate gr number
         $gi_no = static::generateDocNum();
 
-        return view('goodissues.create', compact('title', 'subtitle', 'warehouses', 'items', 'gi_no', 'sessionData'));
+        return view('goodissues.create', compact('title', 'subtitle', 'warehouses', 'projects', 'issuepurposes', 'items', 'gi_no', 'sessionData'));
     }
 
     /**
@@ -124,8 +137,12 @@ class GoodIssueController extends Controller
             $gi->gi_doc_num = $data['gi_doc_num'];
             $gi->gi_posting_date = $data['gi_posting_date'];
             $gi->warehouse_id = $data['warehouse_id'];
+            $gi->project_id = $data['project_id'];
+            $gi->issue_purpose_id = $data['issue_purpose_id'];
+            $gi->it_wo_id = $data['it_wo_id'] ?? null;
             $gi->gi_remarks = $data['gi_remarks'];
             $gi->gi_status = $data['gi_status'];
+            $gi->total_cost = $data['total_cost'];
             $gi->is_cancelled = 'no';
             $gi->user_id = auth()->user()->id;
             $gi->save();
@@ -137,6 +154,8 @@ class GoodIssueController extends Controller
                         'good_issue_id' => $gi->id,
                         'item_id' => $data['item_id'][$item],
                         'gi_qty' => $data['gi_qty'][$item],
+                        'price' => $data['price'][$item],
+                        'gi_line_total' => $data['gi_line_total'][$item],
                         'gi_line_remarks' => $data['gi_line_remarks'][$item]
                     );
                     // tambahkan gr detail ke session
@@ -212,29 +231,66 @@ class GoodIssueController extends Controller
         // dd($goodissue->gidetails);
         $title = 'Inventory Transactions';
         $subtitle = 'Good Issue';
+        // $warehouses = Warehouse::with('bouwheer')
+        //     ->where('warehouse_status', 'active')
+        //     ->where('warehouse_type', 'main')
+        //     ->orderBy('warehouse_name', 'asc')
+        //     ->get();
+
+
+        return view('goodissues.show', compact('title', 'subtitle', 'goodissue'));
+    }
+
+    /**
+     * Show the form for editing the specified resource.
+     */
+    public function edit(GoodIssue $goodissue)
+    {
+        $title = 'Inventory Transactions';
+        $subtitle = 'Good Issue';
+
         $warehouses = Warehouse::with('bouwheer')
             ->where('warehouse_status', 'active')
             ->where('warehouse_type', 'main')
             ->orderBy('warehouse_name', 'asc')
             ->get();
 
-        return view('goodissues.show', compact('title', 'subtitle', 'warehouses', 'goodissue'));
-    }
+        $projects = Project::where('project_status', 'active')->orderBy('project_code', 'asc')->get();
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(GoodIssue $goodIssue)
-    {
-        //
+        $issuepurposes = IssuePurpose::where('purpose_status', 'active')->orderBy('purpose_name', 'asc')->get();
+
+        $items = Item::where('item_status', 'active')->orderBy('item_code', 'asc')->get();
+
+        $sessionData = Session::get('gi_transaction');
+
+        // generate gr number
+        $gi_no = static::generateDocNum();
+
+        return view('goodissues.edit', compact('title', 'subtitle', 'warehouses', 'projects', 'issuepurposes', 'items', 'gi_no', 'sessionData', 'goodissue'));
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, GoodIssue $goodIssue)
+    public function update(Request $request, GoodIssue $goodissue)
     {
-        //
+        try {
+            DB::beginTransaction();
+
+            $goodissue->gi_posting_date = $request->input('gi_posting_date');
+            $goodissue->project_id = $request->input('project_id');
+            $goodissue->issue_purpose_id = $request->input('issue_purpose_id');
+            $goodissue->it_wo_id = $request->input('it_wo_id') ?? null;
+            $goodissue->gi_remarks = $request->input('gi_remarks');
+            $goodissue->user_id = auth()->user()->id;
+            $goodissue->save();
+
+            DB::commit();
+            return redirect()->route('goodissues.show', $goodissue)->with('success', 'Good Issue successfully updated');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->back()->with('error', $e->getMessage());
+        }
     }
 
     /**

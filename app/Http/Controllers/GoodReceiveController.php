@@ -222,7 +222,24 @@ class GoodReceiveController extends Controller
      */
     public function edit(GoodReceive $goodreceive)
     {
-        //
+        $title = 'Inventory Transactions';
+        $subtitle = 'Good Receive';
+        $vendors = Vendor::where('vendor_status', 'active')->orderBy('vendor_name', 'asc')->get();
+        $warehouses = Warehouse::with('bouwheer')
+            ->where('warehouse_status', 'active')
+            ->where('warehouse_type', 'main')
+            ->orderBy('warehouse_name', 'asc')
+            ->get();
+
+        // $goodreceives = Item::where('item_status', 'active')->orderBy('item_code', 'asc')->get();
+
+        // generate gr number
+        // $gr_no = static::generateDocNum();
+
+        // $sessionData = Session::get('gr_transaction');
+        // Session::forget('gr_transaction');
+
+        return view('goodreceives.edit', compact('title', 'subtitle', 'vendors', 'warehouses', 'goodreceive'));
     }
 
     /**
@@ -230,7 +247,18 @@ class GoodReceiveController extends Controller
      */
     public function update(Request $request, GoodReceive $goodreceive)
     {
-        //
+        try {
+            DB::beginTransaction();
+
+            $data = $request->all();
+            $goodreceive->update($data);
+
+            DB::commit();
+            return redirect()->route('goodreceive.show', $goodreceive)->with('success', 'Good Receive successfully updated');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->back()->with('error', $e->getMessage());
+        }
     }
 
     /**

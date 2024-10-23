@@ -6,6 +6,7 @@ use App\Models\Vendor;
 use App\Models\Warehouse;
 use Illuminate\Http\Request;
 use App\Exports\GoodReceiveExport;
+use App\Models\Project;
 use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Facades\Excel;
 
@@ -75,15 +76,19 @@ class ReportController extends Controller
             ->orderBy('warehouse_name', 'asc')
             ->get();
 
+        $projects = Project::where('project_status', 'active')->orderBy('project_code', 'asc')->get();
+
         $query = DB::table('good_issues')
             ->leftJoin('gi_details', 'good_issues.id', '=', 'gi_details.good_issue_id')
             ->leftJoin('items', 'gi_details.item_id', '=', 'items.id')
             // ->leftJoin('types', 'items.type_id', '=', 'types.id')
             ->leftJoin('groups', 'items.group_id', '=', 'groups.id')
+            ->leftJoin('projects', 'good_issues.project_id', '=', 'projects.id')
+            ->leftJoin('issue_purposes', 'good_issues.issue_purpose_id', '=', 'issue_purposes.id')
             ->leftJoin('warehouses', 'good_issues.warehouse_id', '=', 'warehouses.id')
             ->leftJoin('bouwheers', 'warehouses.bouwheer_id', '=', 'bouwheers.id')
             ->leftJoin('users', 'good_issues.user_id', '=', 'users.id')
-            ->select('good_issues.*', 'gi_qty', 'gi_line_remarks', 'item_code', 'description', 'group_name', 'warehouse_name', 'bouwheer_name', 'name')
+            ->select('good_issues.*', 'gi_qty', 'price', 'gi_line_remarks', 'item_code', 'description', 'group_name', 'project_code', 'purpose_name', 'warehouse_name', 'bouwheer_name', 'name')
             ->orderBy('good_issues.id', 'desc');
 
         $conditions = [];
@@ -91,6 +96,10 @@ class ReportController extends Controller
         if ($request->filled('from') && $request->filled('to')) {
             $conditions[] = ['gi_posting_date', '>=', $request->input('from')];
             $conditions[] = ['gi_posting_date', '<=', $request->input('to')];
+        }
+
+        if ($request->filled('project_id')) {
+            $conditions[] = ['good_issues.project_id', '=', $request->input('project_id')];
         }
 
         if ($request->filled('warehouse_id')) {
@@ -106,7 +115,7 @@ class ReportController extends Controller
             $results = $query->get();
         }
 
-        return view('reports.goodissue', compact('title', 'subtitle', 'warehouses', 'results'));
+        return view('reports.goodissue', compact('title', 'subtitle', 'projects', 'warehouses', 'results'));
     }
 
     public function transfer(Request $request)
@@ -267,61 +276,114 @@ class ReportController extends Controller
         return view('reports.audit', compact('title', 'subtitle', 'warehouses', 'results'));
     }
 
-    public function permitReport(Request $request)
+    public function inventoryInWarehouse(Request $request)
     {
         $title = 'Reports';
-        $subtitle = 'Permit Report';
+        $subtitle = 'Inventory in Warehouse Report';
         $warehouses = Warehouse::with('bouwheer')
             ->where('warehouse_status', 'active')
             ->orderBy('warehouse_name', 'asc')
             ->get();
         $results  = null;
 
-        $from = $request->input('from');
-        $to = $request->input('to');
         $itemCode = $request->input('item_code');
         $warehouseIds = $request->input('warehouse_ids');
+        $hideZero = $request->input('hide_zero');
 
-        $permitQuery = DB::table('permits')
+        $inWarehouseQuery = DB::table('inventories')
             ->select(
-                'permits.permit_no',
-                'permits.permit_date',
-                'permits.valid_month',
-                'permits.warehouse_id',
-                'warehouses.warehouse_name',
-                'users.name',
-                'items.id as item_id',
                 'items.item_code',
                 'items.description',
-                'permit_details.si_qty',
-                'permit_details.si_line_remarks',
-                'permit_details.created_at'
+                'groups.group_name',
+                'warehouses.warehouse_name',
+                'warehouses.warehouse_location',
+                'inventories.stock'
             )
-            ->leftJoin('permit_details', 'permits.id', '=', 'permit_details.permit_id')
-            ->leftJoin('items', 'permit_details.item_id', '=', 'items.id')
-            ->leftJoin('warehouses', 'permits.warehouse_id', '=', 'warehouses.id')
-            ->leftJoin('users', 'permits.user_id', '=', 'users.id');
+            ->leftJoin('items', 'inventories.item_id', '=', 'items.id')
+            ->leftJoin('groups', 'items.group_id', '=', 'groups.id')
+            ->leftJoin('warehouses', 'inventories.warehouse_id', '=', 'warehouses.id');
 
         // Menerapkan filter jika ada input dari form
-        if ($from && $to) {
-            $permitQuery->whereBetween('permits.permit_date', [$from, $to]);
-        }
-
         if ($itemCode) {
-            $permitQuery->where('items.item_code', 'LIKE', "%$itemCode%");
+            $inWarehouseQuery->where('items.item_code', 'LIKE', "%$itemCode%");
         }
 
         if ($warehouseIds) {
-            $permitQuery->whereIn('permits.warehouse_id', $warehouseIds);
+            $inWarehouseQuery->whereIn('inventories.warehouse_id', $warehouseIds);
+        }
+
+        // Tambahkan kondisi untuk menyembunyikan stok nol jika checkbox dicentang
+        if ($hideZero) {
+            $inWarehouseQuery->where('inventories.stock', '>', 0);
         }
 
         // Jika tidak ada filter, maka kosongkan subquery
-        if (!empty($from) || !empty($to) || !empty($itemCode) || !empty($warehouseIds)) {
-            $results = $permitQuery
-                ->orderBy('created_at', 'asc')
+        if (!empty($itemCode) || !empty($warehouseIds)) {
+            // Gabungkan ketiga bagian subquery menggunakan union
+            $results = $inWarehouseQuery
+                ->orderBy('item_code', 'asc')
+                ->orderBy('warehouse_name', 'asc')
                 ->get();
         }
 
-        return view('reports.permit', compact('title', 'subtitle', 'warehouses', 'results'));
+        return view('reports.inwarehouse', compact('title', 'subtitle', 'warehouses', 'results'));
     }
+
+    //     public function permitReport(Request $request)
+    //     {
+    //         $title = 'Reports';
+    //         $subtitle = 'Permit Report';
+    //         $warehouses = Warehouse::with('bouwheer')
+    //             ->where('warehouse_status', 'active')
+    //             ->orderBy('warehouse_name', 'asc')
+    //             ->get();
+    //         $results  = null;
+
+    //         $from = $request->input('from');
+    //         $to = $request->input('to');
+    //         $itemCode = $request->input('item_code');
+    //         $warehouseIds = $request->input('warehouse_ids');
+
+    //         $permitQuery = DB::table('permits')
+    //             ->select(
+    //                 'permits.permit_no',
+    //                 'permits.permit_date',
+    //                 'permits.valid_month',
+    //                 'permits.warehouse_id',
+    //                 'warehouses.warehouse_name',
+    //                 'users.name',
+    //                 'items.id as item_id',
+    //                 'items.item_code',
+    //                 'items.description',
+    //                 'permit_details.si_qty',
+    //                 'permit_details.si_line_remarks',
+    //                 'permit_details.created_at'
+    //             )
+    //             ->leftJoin('permit_details', 'permits.id', '=', 'permit_details.permit_id')
+    //             ->leftJoin('items', 'permit_details.item_id', '=', 'items.id')
+    //             ->leftJoin('warehouses', 'permits.warehouse_id', '=', 'warehouses.id')
+    //             ->leftJoin('users', 'permits.user_id', '=', 'users.id');
+
+    //         // Menerapkan filter jika ada input dari form
+    //         if ($from && $to) {
+    //             $permitQuery->whereBetween('permits.permit_date', [$from, $to]);
+    //         }
+
+    //         if ($itemCode) {
+    //             $permitQuery->where('items.item_code', 'LIKE', "%$itemCode%");
+    //         }
+
+    //         if ($warehouseIds) {
+    //             $permitQuery->whereIn('permits.warehouse_id', $warehouseIds);
+    //         }
+
+    //         // Jika tidak ada filter, maka kosongkan subquery
+    //         if (!empty($from) || !empty($to) || !empty($itemCode) || !empty($warehouseIds)) {
+    //             $results = $permitQuery
+    //                 ->orderBy('created_at', 'asc')
+    //                 ->get();
+    //         }
+
+    //         return view('reports.permit', compact('title', 'subtitle', 'warehouses', 'results'));
+    //     }
 }

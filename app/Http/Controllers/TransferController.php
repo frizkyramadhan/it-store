@@ -300,7 +300,21 @@ class TransferController extends Controller
      */
     public function edit(Transfer $transfer)
     {
-        //
+        $title = 'Inventory Transactions';
+        $subtitle = 'Inventory Transfer';
+        $warehouses = Warehouse::with('bouwheer')->where('warehouse_status', 'active')->orderBy('warehouse_name', 'asc')->get();
+
+        // $items = Item::where('item_status', 'active')->orderBy('item_code', 'asc')->get();
+
+        // $sessionData = Session::get('trf_transaction');
+
+        // generate gr number
+        // $trf_no = static::generateDocNum();
+
+        // get transfer type out and status open
+        // $transferOuts = Transfer::with(['trfdetails', 'fromWarehouse', 'toWarehouse'])->where('trf_type', 'out')->where('trf_status', 'open')->orderBy('trf_doc_num', 'desc')->get();
+
+        return view('transfers.edit', compact('title', 'subtitle', 'warehouses', 'transfer'));
     }
 
     /**
@@ -308,7 +322,18 @@ class TransferController extends Controller
      */
     public function update(Request $request, Transfer $transfer)
     {
-        //
+        try {
+            DB::beginTransaction();
+
+            $data = $request->all();
+            $transfer->update($data);
+
+            DB::commit();
+            return redirect()->route('transfers.show', $transfer)->with('success', 'Inventory Transfer successfully updated');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->back()->with('error', $e->getMessage());
+        }
     }
 
     /**

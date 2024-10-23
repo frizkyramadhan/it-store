@@ -18,6 +18,7 @@
             <h2>{{ $subtitle }}</h2>
             <ul class="nav navbar-right panel_toolbox">
               <a href="{{ url('goodreceive') }}" class="btn btn-success"><i class="fa fa-arrow-circle-left"></i> Back</a>
+              <a href="{{ url('goodreceive/' . $goodreceive->id . '/edit') }}" class="btn btn-warning"><i class="fa fa-pencil"></i> Edit</a>
             </ul>
             <div class="clearfix"></div>
           </div>
@@ -61,11 +62,9 @@
               </div>
             </div>
             <div class="col-md-12 col-xs-12 left-margin">
-              <div class="x_panel">
-                <div class="x_title">
-                  <h2>Good Receive Detail</h2>
-                  <ul class="nav navbar-right panel_toolbox"></ul>
-                  <div class="clearfix"></div>
+              <div class="row x_title">
+                <div class="col-md-6">
+                  <h3>Contents</h3>
                 </div>
                 <div class="x_content">
                   <div class="table-responsive">

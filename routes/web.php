@@ -18,7 +18,9 @@ use App\Http\Controllers\GoodIssueController;
 use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\WarehouseController;
 use App\Http\Controllers\GoodReceiveController;
+use App\Http\Controllers\IssuePurposeController;
 use App\Http\Controllers\PermitController;
+use App\Http\Controllers\ProjectController;
 
 /*
 |--------------------------------------------------------------------------
@@ -65,6 +67,13 @@ Route::group(['middleware' => ['auth']], function () {
     Route::get('groups/data', [GroupController::class, 'getGroups'])->name('groups.data');
     Route::resource('groups', GroupController::class)->except(['create', 'show', 'edit']);
 
+    Route::get('projects/data', [ProjectController::class, 'getProjects'])->name('projects.data');
+    Route::post('projects/import', [ProjectController::class, 'import'])->name('projects.import');
+    Route::resource('projects', ProjectController::class)->except(['create', 'show', 'edit']);
+
+    Route::get('issuepurposes/data', [IssuePurposeController::class, 'getIssuePurposes'])->name('issuepurposes.data');
+    Route::resource('issuepurposes', IssuePurposeController::class)->except(['create', 'show', 'edit']);
+
     Route::get('items/data', [ItemController::class, 'getItems'])->name('items.data');
     Route::get('items/dataForTransaction', [ItemController::class, 'getItemsForTransaction'])->name('items.dataForTransaction');
     Route::get('items/searchItemByCode', [ItemController::class, 'searchItemByCode'])->name('items.searchItemByCode');
@@ -102,7 +111,8 @@ Route::group(['middleware' => ['auth']], function () {
     Route::get('reports/good-issue', [ReportController::class, 'goodIssue'])->name('report.goodissue');
     Route::get('reports/transfer', [ReportController::class, 'transfer'])->name('report.transfer');
     Route::get('reports/inventory-audit', [ReportController::class, 'inventoryAuditReport'])->name('report.inventoryaudit');
-    Route::get('reports/permit', [ReportController::class, 'permitReport'])->name('report.permit');
+    Route::get('reports/inventory-in-warehouse', [ReportController::class, 'inventoryInWarehouse'])->name('report.inventoryinwarehouse');
+    // Route::get('reports/permit', [ReportController::class, 'permitReport'])->name('report.permit');
 
     // Route::get('permits/data', [PermitController::class, 'getPermit'])->name('permits.data');
     // Route::get('permits/extend/{permit}', [PermitController::class, 'extend'])->name('permits.extend');

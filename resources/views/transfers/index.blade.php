@@ -40,7 +40,7 @@
                     {{-- <th>Type</th> --}}
                     <th>From Warehouse</th>
                     <th>To Warehouse</th>
-                    <th>Remarks</th>
+                    <th width="30%">Remarks</th>
                     <th>Created By</th>
                     <th class="text-center" width="10%">Action</th>
                   </tr>
@@ -137,6 +137,9 @@
         data: "trf_remarks"
         , name: "trf_remarks"
         , orderable: false
+        , render: function(data, type, row) {
+          return data.length > 50 ? data.substr(0, 50) + '...' : data;
+        }
       , }, {
         data: "name"
         , name: "name"

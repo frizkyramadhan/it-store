@@ -37,8 +37,9 @@
                     <th width="5%">No</th>
                     <th>Document No.</th>
                     <th>Posting Date</th>
+                    <th width="5%">Project</th>
                     <th>Warehouse</th>
-                    <th>Remarks</th>
+                    <th width="30%">Remarks</th>
                     <th>Created By</th>
                     <th class="text-center" width="10%">Action</th>
                   </tr>
@@ -119,6 +120,11 @@
         , name: "gi_posting_date"
         , orderable: false
       , }, {
+        data: "project_code"
+        , name: "project_code"
+        , orderable: false
+        , className: "text-center"
+      , }, {
         data: "warehouse_name"
         , name: "warehouse_name"
         , orderable: false
@@ -126,6 +132,9 @@
         data: "gi_remarks"
         , name: "gi_remarks"
         , orderable: false
+        , render: function(data, type, row) {
+          return data.length > 50 ? data.substr(0, 50) + '...' : data;
+        }
       , }, {
         data: "name"
         , name: "name"

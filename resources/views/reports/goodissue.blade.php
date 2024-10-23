@@ -41,6 +41,16 @@
                 </div>
 
                 <div class="col-md-2 col-sm-12 col-xs-12 form-group">
+                  <label>Project</label>
+                  <select id="project_id" class="select2 form-control" name="project_id" style="width: 100%">
+                    <option value="">Select Project</option>
+                    @foreach ($projects as $project)
+                    <option value="{{ $project->id }}" {{ request('project_id') == $project->id ? 'selected' : ('') }}>{{ $project->project_code }}</option>
+                    @endforeach
+                  </select>
+                </div>
+
+                <div class="col-md-2 col-sm-12 col-xs-12 form-group">
                   <label>Warehouse</label>
                   <select id="warehouse_id" class="select2 form-control" name="warehouse_id" style="width: 100%">
                     <option value="">Select Warehouse</option>
@@ -75,17 +85,18 @@
                   @endif
                   <thead>
                     <tr>
-                      <th style="vertical-align: middle">No</th>
+                      <th style="vertical-align: middle" width="5%">No</th>
                       <th style="vertical-align: middle">Document No.</th>
                       <th style="vertical-align: middle">Posting Date</th>
+                      <th style="vertical-align: middle" width="5%">Project</th>
                       <th style="vertical-align: middle">Warehouse</th>
-                      <th style="vertical-align: middle">Bouwheer</th>
                       <th style="vertical-align: middle">Remarks</th>
+                      <th style="vertical-align: middle">Total Cost</th>
                       <th style="vertical-align: middle">Item Code</th>
                       <th style="vertical-align: middle">Description</th>
                       <th style="vertical-align: middle">Qty</th>
-                      {{-- <th style="vertical-align: middle">Type</th> --}}
-                      <th style="vertical-align: middle">Group</th>
+                      <th style="vertical-align: middle">Price</th>
+                      {{-- <th style="vertical-align: middle">Group</th> --}}
                       <th style="vertical-align: middle">Line Remarks</th>
                       <th style="vertical-align: middle">Created By</th>
                     </tr>
@@ -97,21 +108,22 @@
                       <td>{{ $loop->iteration }}</td>
                       <td>{{ $result->gi_doc_num }}</td>
                       <td class="text-right">{{ date('d M Y', strtotime($result->gi_posting_date)) }}</td>
+                      <td>{{ $result->project_code }}</td>
                       <td>{{ $result->warehouse_name }}</td>
-                      <td>{{ $result->bouwheer_name }}</td>
                       <td>{{ $result->gi_remarks }}</td>
+                      <td>{{ $result->total_cost }}</td>
                       <td>{{ $result->item_code }}</td>
                       <td>{{ $result->description }}</td>
                       <td class="text-right">{{ $result->gi_qty }}</td>
-                      {{-- <td>{{ $result->type_name }}</td> --}}
-                      <td>{{ $result->group_name }}</td>
+                      <td class="text-right">{{ $result->price }}</td>
+                      {{-- <td>{{ $result->group_name }}</td> --}}
                       <td>{{ $result->gi_line_remarks }}</td>
                       <td>{{ $result->name }}</td>
                     </tr>
                     @endforeach
                     @else
                     <tr>
-                      <td colspan="13" class="text-center">No data available</td>
+                      <td colspan="14" class="text-center">No data available</td>
                     </tr>
                     @endif
                   </tbody>

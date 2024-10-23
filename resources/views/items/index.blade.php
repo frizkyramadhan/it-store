@@ -70,15 +70,16 @@
             </div>
             @endif
             <div class="table-responsive">
-              <table id="datatable-serverside" class="table table-striped table-bordered dt-responsive nowrap" cellspacing="0" width="100%">
+              <table id="datatable-serverside" class="table table-striped table-bordered dt-responsive" cellspacing="0" width="100%">
                 <thead>
                   <tr>
-                    <th width="5%">No</th>
+                    <th>No</th>
                     <th>Item Code</th>
                     <th>Description</th>
                     <th>Group</th>
-                    <th width="5%">Status</th>
-                    <th class="text-center" width="10%">Action</th>
+                    <th>Stock</th>
+                    <th>Status</th>
+                    <th class="text-center" width="21%">Action</th>
                   </tr>
                 </thead>
               </table>
@@ -195,6 +196,11 @@
         data: "group_name"
         , name: "group_name"
         , orderable: false
+      , }, {
+        data: "total_stock"
+        , name: "total_stock"
+        , orderable: false
+        , className: "text-center"
       , }, {
         data: "item_status"
         , name: "item_status"

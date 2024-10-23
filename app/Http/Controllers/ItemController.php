@@ -46,6 +46,7 @@ class ItemController extends Controller
             ->orderBy('group_name', 'asc')
             ->orderBy('item_code', 'asc');
 
+
         return datatables()->of($items)
             ->addIndexColumn()
             ->addColumn('item_code', function ($items) {

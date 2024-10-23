@@ -57,6 +57,7 @@
                   </select>
                 </div>
                 <div class="form-group">
+<<<<<<< HEAD
                   <label>Project <span class="required">*</span></label>
                   <select id="project_id" class="select2 form-control" name="project_id" style="width: 100%" required>
                     <option value="">Select Project</option>
@@ -64,6 +65,11 @@
                     <option value="{{ $project->id }}" {{ $sessionData ? ($sessionData['gi']['project_id'] == $project->id ? "selected" : "") : "" }}>{{ $project->project_code }} - {{ $project->project_name }}</option>
                     @endforeach
                   </select>
+=======
+                  <label>Remarks</label>
+                  <textarea class="form-control" rows="3" name="gi_remarks" required>{{ $sessionData ? $sessionData['gi']['gi_remarks'] : ""}}</textarea>
+                  <input type="hidden" class="form-control" name="gi_status" value="open" />
+>>>>>>> 1f3ba25da01253f4353bd92ebcb0ab6e9fedc027
                 </div>
               </div>
               <div class="col-md-6 col-xs-12 left-margin">

@@ -110,11 +110,7 @@ Route::group(['middleware' => ['auth']], function () {
     Route::get('reports/good-receive', [ReportController::class, 'goodReceive'])->name('report.goodreceive');
     Route::get('reports/good-issue', [ReportController::class, 'goodIssue'])->name('report.goodissue');
     Route::get('reports/transfer', [ReportController::class, 'transfer'])->name('report.transfer');
-<<<<<<< HEAD
     Route::get('reports/inventory-audit', [ReportController::class, 'inventoryAuditReport'])->name('report.inventoryaudit');
-=======
-    Route::get('reports/inventory-audit', [ReportController::class, 'inventoryAudit'])->name('report.inventoryaudit');
->>>>>>> 1f3ba25da01253f4353bd92ebcb0ab6e9fedc027
     Route::get('reports/inventory-in-warehouse', [ReportController::class, 'inventoryInWarehouse'])->name('report.inventoryinwarehouse');
     // Route::get('reports/permit', [ReportController::class, 'permitReport'])->name('report.permit');
 

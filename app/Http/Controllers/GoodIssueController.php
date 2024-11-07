@@ -296,7 +296,7 @@ class GoodIssueController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(GoodIssue $goodIssue)
+    public function destroy(GoodIssue $goodissue)
     {
         //
     }
@@ -306,5 +306,38 @@ class GoodIssueController extends Controller
         Session::forget('gi_transaction');
 
         return redirect('goodissues')->with('success', 'Session Destroyed');
+    }
+
+    public function print(GoodIssue $goodissue)
+    {
+        $title = 'Inventory Transactions';
+        $subtitle = 'Good Issue';
+
+        // URL API dan API key
+        $url = 'http://192.168.32.37/arka-rest-server/api/it_wo_store/';
+        $apiKey = 'arka123';
+
+        // Melakukan permintaan GET ke API dengan parameter
+        $response = Http::get($url, [
+            'arka-key' => $apiKey,
+            'id_wo' => $goodissue->it_wo_id
+        ]);
+
+        // Memeriksa apakah respons sukses
+        if ($response->successful() && isset($response['status']) && $response['status'] === true) {
+            $data = $response['data'][0] ?? null;
+
+            if ($data) {
+                // Mengirimkan data ke view
+                return view('goodissues.print', compact('title', 'subtitle', 'goodissue', 'data'));
+            } else {
+                return redirect()->back()->withErrors('Data IT WO tidak ditemukan.');
+            }
+        } else {
+            // Jika ada kesalahan
+            return redirect()->back()->withErrors('Error saat mengambil data IT WO.');
+        }
+
+        // return view('goodissues.print', compact('title', 'subtitle', 'goodissue'));
     }
 }

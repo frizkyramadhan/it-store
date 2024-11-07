@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\User;
 use App\Models\TrfDetail;
 use App\Models\Warehouse;
 use Illuminate\Database\Eloquent\Model;
@@ -28,5 +29,10 @@ class Transfer extends Model
     public function toWarehouse()
     {
         return $this->belongsTo(Warehouse::class, 'trf_to', 'id');
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
     }
 }

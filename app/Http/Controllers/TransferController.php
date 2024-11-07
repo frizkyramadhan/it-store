@@ -343,4 +343,12 @@ class TransferController extends Controller
     {
         //
     }
+
+    public function print(Transfer $transfer)
+    {
+        $title = 'Inventory Transactions';
+        $subtitle = 'Inventory Transfer';
+
+        return view('transfers.print', compact('title', 'subtitle', 'transfer'));
+    }
 }

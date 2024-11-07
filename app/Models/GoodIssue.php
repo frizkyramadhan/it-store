@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\User;
 use App\Models\Project;
 use App\Models\GiDetail;
 use App\Models\Warehouse;
@@ -34,5 +35,10 @@ class GoodIssue extends Model
     public function gidetails()
     {
         return $this->hasMany(GiDetail::class);
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
     }
 }

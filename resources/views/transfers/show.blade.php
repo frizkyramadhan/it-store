@@ -19,6 +19,7 @@
             <ul class="nav navbar-right panel_toolbox">
               <a href="{{ url('transfers') }}" class="btn btn-success"><i class="fa fa-arrow-circle-left"></i> Back</a>
               <a href="{{ url('transfers/' . $transfer->id . '/edit') }}" class="btn btn-warning"><i class="fa fa-pencil"></i> Edit</a>
+              <a href="{{ url('transfers/' . $transfer->id . '/print') }}" class="btn btn-info" target="_blank"><i class="fa fa-print"></i> Print</a>
             </ul>
             <div class="clearfix"></div>
           </div>

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\User;
 use App\Models\Vendor;
 use App\Models\GrDetail;
 use App\Models\Warehouse;
@@ -28,5 +29,10 @@ class GoodReceive extends Model
     public function grdetails()
     {
         return $this->hasMany(GrDetail::class);
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
     }
 }

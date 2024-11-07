@@ -274,4 +274,12 @@ class GoodReceiveController extends Controller
         Session::forget('gr_transaction');
         return redirect('goodreceive')->with('success', 'Session Destroyed');
     }
+
+    public function print(GoodReceive $goodreceive)
+    {
+        $title = 'Inventory Transactions';
+        $subtitle = 'Good Receive';
+
+        return view('goodreceives.print', compact('title', 'subtitle', 'goodreceive'));
+    }
 }

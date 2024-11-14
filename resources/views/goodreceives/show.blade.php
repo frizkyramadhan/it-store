@@ -15,11 +15,17 @@
       <div class="col-md-12 col-sm-12 col-xs-12">
         <div class="x_panel">
           <div class="x_title">
-            <h2>{{ $subtitle }}</h2>
+            <h2>{{ $subtitle }}<small class="text-danger"><b>*{{ $goodreceive->is_cancelled == 'yes' ? 'Canceled' : '' }}</b></small></h2>
             <ul class="nav navbar-right panel_toolbox">
-              <a href="{{ url('goodreceive') }}" class="btn btn-success"><i class="fa fa-arrow-circle-left"></i> Back</a>
-              <a href="{{ url('goodreceive/' . $goodreceive->id . '/edit') }}" class="btn btn-warning"><i class="fa fa-pencil"></i> Edit</a>
-              <a href="{{ url('goodreceive/' . $goodreceive->id . '/print') }}" class="btn btn-info" target="_blank"><i class="fa fa-print"></i> Print</a>
+              <form action="{{ route('goodreceive.cancel', $goodreceive->id) }}" method="POST">
+                <a href="{{ url('goodreceive') }}" class="btn btn-success"><i class="fa fa-arrow-circle-left"></i> Back</a>
+                @if ($goodreceive->is_cancelled != 'yes')
+                <a href="{{ url('goodreceive/' . $goodreceive->id . '/edit') }}" class="btn btn-warning"><i class="fa fa-pencil"></i> Edit</a>
+                <a href="{{ url('goodreceive/' . $goodreceive->id . '/print') }}" class="btn btn-info" target="_blank"><i class="fa fa-print"></i> Print</a>
+                @csrf
+                <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure want to cancel this data?')"><i class="fa fa-times"></i> Cancel</button>
+                @endif
+              </form>
             </ul>
             <div class="clearfix"></div>
           </div>

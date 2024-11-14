@@ -33,49 +33,62 @@ class GoodIssueController extends Controller
 
     public function getGoodIssue(Request $request)
     {
-        $goodissues = GoodIssue::leftJoin('warehouses', 'good_issues.warehouse_id', '=', 'warehouses.id')
+        $goodIssues = GoodIssue::select('good_issues.*', 'warehouses.warehouse_name', 'projects.project_code', 'users.name')
+            ->leftJoin('warehouses', 'good_issues.warehouse_id', '=', 'warehouses.id')
             ->leftJoin('projects', 'good_issues.project_id', '=', 'projects.id')
             ->leftJoin('users', 'good_issues.user_id', '=', 'users.id')
-            ->select('good_issues.*', 'warehouses.warehouse_name', 'projects.project_code', 'users.name')
-            ->orderBy('gi_doc_num', 'desc');
+            ->orderBy('gi_doc_num', 'desc')
+            ->get();
 
-        return datatables()->of($goodissues)
+        $datatable = datatables()->of($goodIssues)
             ->addIndexColumn()
-            ->addColumn('gi_doc_num', function ($goodissues) {
-                return $goodissues->gi_doc_num;
-            })
-            ->addColumn('gi_posting_date', function ($goodissues) {
-                return date('d-M-Y', strtotime($goodissues->gi_posting_date));
-            })
-            ->addColumn('project_code', function ($goodissues) {
-                return $goodissues->project_code;
-            })
-            ->addColumn('warehouse_name', function ($goodissues) {
-                return $goodissues->warehouse_name;
-            })
-            ->addColumn('gi_remarks', function ($goodissues) {
-                return $goodissues->gi_remarks;
-            })
-            ->addColumn('name', function ($goodissues) {
-                return $goodissues->name;
-            })
+            ->addColumn('documentNumber', fn($goodIssue) => $goodIssue->gi_doc_num)
+            ->addColumn('postingDate', fn($goodIssue) => date('d-M-Y', strtotime($goodIssue->gi_posting_date)))
+            ->addColumn('projectCode', fn($goodIssue) => $goodIssue->project_code)
+            ->addColumn('warehouse', fn($goodIssue) => $goodIssue->warehouse_name)
+            ->addColumn('remarks', fn($goodIssue) => $goodIssue->gi_remarks)
+            ->addColumn('user', fn($goodIssue) => $goodIssue->name)
+            ->addColumn('workOrder', fn($goodIssue) => $this->getWorkOrder($goodIssue->it_wo_id))
+            ->addColumn('status', fn($goodIssue) => '<span class="' . ($goodIssue->is_cancelled === 'yes' ? 'label label-danger' : 'label label-success') . '">' . ($goodIssue->is_cancelled === 'yes' ? 'Canceled' : 'Open') . '</span>')
             ->filter(function ($instance) use ($request) {
-                if (!empty($request->get('search'))) {
-                    $instance->where(function ($w) use ($request) {
-                        $search = $request->get('search');
-                        $w->orWhere('gi_doc_num', 'LIKE', "%$search%")
-                            ->orWhere('gi_posting_date', 'LIKE', "%$search%")
-                            ->orWhere('project_code', 'LIKE', "%$search%")
-                            ->orWhere('warehouse_name', 'LIKE', "%$search%")
-                            ->orWhere('gi_remarks', 'LIKE', "%$search%")
-                            ->orWhere('name', 'LIKE', "%$search%");
+                if ($request->has('search')) {
+                    $search = $request->get('search');
+                    $instance->collection = $instance->collection->filter(function ($row) use ($search) {
+                        return stripos($row['gi_doc_num'], $search) !== false
+                            || stripos($row['gi_posting_date'], $search) !== false
+                            || stripos($row['project_code'], $search) !== false
+                            || stripos($row['warehouse_name'], $search) !== false
+                            || stripos($row['gi_remarks'], $search) !== false
+                            || stripos($row['name'], $search) !== false
+                            || stripos($row['status'], $search) !== false
+                            || stripos($row['workOrder'], $search) !== false;
                     });
                 }
             })
             ->addColumn('action', 'goodissues.action')
-            ->rawColumns(['action'])
+            ->rawColumns(['status', 'action'])
             ->toJson();
+
+        return $datatable;
     }
+
+    private function getWorkOrder($workOrderId)
+    {
+        if (!$workOrderId) {
+            return '-';
+        }
+
+        $url = 'http://192.168.32.37/arka-rest-server/api/it_wo_store/';
+        $apiKey = 'arka123';
+
+        $response = Http::get($url, [
+            'arka-key' => $apiKey,
+            'id_wo' => $workOrderId
+        ]);
+
+        return $response['data'][0]['no_wo'] ?? '-';
+    }
+
 
     /**
      * Show the form for creating a new resource.
@@ -339,5 +352,43 @@ class GoodIssueController extends Controller
         }
 
         // return view('goodissues.print', compact('title', 'subtitle', 'goodissue'));
+    }
+
+    public function cancel($id)
+    {
+        try {
+            DB::beginTransaction();
+
+            // Ambil dokumen good issue yang akan dibatalkan
+            $gi = GoodIssue::findOrFail($id);
+
+            // Periksa apakah dokumen sudah dibatalkan sebelumnya
+            if ($gi->is_cancelled === 'yes') {
+                return redirect()->back()->with('error', 'Good Issue document is already cancelled.');
+            }
+
+            // Update status dokumen menjadi dibatalkan
+            $gi->gi_status = 'closed';
+            $gi->is_cancelled = 'yes';
+            $gi->save();
+
+            // Ambil detail dari dokumen good issue
+            $giDetails = GiDetail::where('good_issue_id', $gi->id)->get();
+
+            // Kembalikan stok ke inventory untuk setiap item
+            foreach ($giDetails as $detail) {
+                app(InventoryController::class)->transactionIn(
+                    $detail->item_id,
+                    $gi->warehouse_id,
+                    $detail->gi_qty
+                );
+            }
+
+            DB::commit();
+            return redirect()->route('goodissues.index')->with('success', 'Good Issue cancelled successfully!');
+        } catch (\Exception $e) {
+            DB::rollback();
+            return redirect()->back()->with('error', $e->getMessage());
+        }
     }
 }

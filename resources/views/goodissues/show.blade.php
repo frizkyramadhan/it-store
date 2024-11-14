@@ -15,11 +15,17 @@
       <div class="col-md-12 col-sm-12 col-xs-12">
         <div class="x_panel">
           <div class="x_title">
-            <h2>{{ $subtitle }}</h2>
+            <h2>{{ $subtitle }}<small class="text-danger"><b>*{{ $goodissue->is_cancelled == 'yes' ? 'Canceled' : '' }}</b></small></h2>
             <ul class="nav navbar-right panel_toolbox">
-              <a href="{{ url('goodissues') }}" class="btn btn-success"><i class="fa fa-arrow-circle-left"></i> Back</a>
-              <a href="{{ url('goodissues/' . $goodissue->id . '/edit') }}" class="btn btn-warning"><i class="fa fa-pencil"></i> Edit</a>
-              <a href="{{ url('goodissues/' . $goodissue->id . '/print') }}" class="btn btn-info" target="_blank"><i class="fa fa-print"></i> Print</a>
+              <form action="{{ route('goodissues.cancel', $goodissue->id) }}" method="POST">
+                <a href="{{ route('goodissues.index') }}" class="btn btn-success"><i class="fa fa-arrow-circle-left"></i> Back</a>
+                @if ($goodissue->is_cancelled != 'yes')
+                <a href="{{ route('goodissues.edit', $goodissue->id) }}" class="btn btn-warning"><i class="fa fa-pencil"></i> Edit</a>
+                <a href="{{ route('goodissues.print', $goodissue->id) }}" class="btn btn-info" target="_blank"><i class="fa fa-print"></i> Print</a>
+                @csrf
+                <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure want to cancel this data?')"><i class="fa fa-times"></i> Cancel</button>
+                @endif
+              </form>
             </ul>
             <div class="clearfix"></div>
           </div>
@@ -106,10 +112,10 @@
                             <h5>{{ $gidetail->gi_qty }}</h5>
                           </td>
                           <td class="text-right">
-                            <h5>{{ $gidetail->price }}</h5>
+                            <h5>{{ number_format($gidetail->price, 2, '.', ',') }}</h5>
                           </td>
                           <td class="text-right">
-                            <h5>{{ $gidetail->gi_line_total }}</h5>
+                            <h5>{{ number_format($gidetail->gi_line_total, 2, '.', ',') }}</h5>
                           </td>
                           <td colspan="2">
                             <h5>{{ $gidetail->gi_line_remarks }}</h5>
@@ -152,7 +158,7 @@
                     {{-- @dd($batches) --}}
                     <div class="form-group text-right">
                       <label>Total Cost (IDR)</label>
-                      <h3>{{ $goodissue->total_cost ?? '0.00' }}</h3>
+                      <h3>{{ number_format($goodissue->total_cost ?? 0, 2, '.', ',') }}</h3>
                     </div>
                   </div>
                 </div>

@@ -41,6 +41,8 @@
                     <th>Warehouse</th>
                     <th width="30%">Remarks</th>
                     <th>Created By</th>
+                    <th>IT WO Ref.</th>
+                    <th>Status</th>
                     <th class="text-center" width="10%">Action</th>
                   </tr>
                 </thead>
@@ -86,7 +88,7 @@
 {{-- script datatable serverside --}}
 <script>
   $(function() {
-    var table = $("#datatable-serverside").DataTable({
+    var table = $('#datatable-serverside').DataTable({
       responsive: true
       , autoWidth: true
       , lengthChange: true
@@ -95,15 +97,13 @@
         , ['10', '25', '50', '100', 'Show all']
       ]
       , dom: 'lBfrtpi'
-        // , dom: 'frtpi'
-      , buttons: ["copy", "csv", "print"]
+      , buttons: ['copy', 'csv', 'print']
       , processing: true
       , serverSide: true
       , ajax: {
-        url: "{{ route('goodissues.data') }}"
-        , data: function(d) {
-          d.search = $("input[type=search][aria-controls=datatable-serverside]").val()
-          // console.log(d);
+        url: `{{ route('goodissues.data') }}`
+        , data: function(data) {
+          data.search = $('input[type=search][aria-controls=datatable-serverside]').val();
         }
       }
       , columns: [{
@@ -112,43 +112,53 @@
         , searchable: false
         , className: 'text-center'
       }, {
-        data: "gi_doc_num"
-        , name: "gi_doc_num"
+        data: 'documentNumber'
+        , name: 'gi_doc_num'
         , orderable: false
-      , }, {
-        data: "gi_posting_date"
-        , name: "gi_posting_date"
+      }, {
+        data: 'postingDate'
+        , name: 'gi_posting_date'
         , orderable: false
-      , }, {
-        data: "project_code"
-        , name: "project_code"
+      }, {
+        data: 'projectCode'
+        , name: 'project_code'
         , orderable: false
-        , className: "text-center"
-      , }, {
-        data: "warehouse_name"
-        , name: "warehouse_name"
+        , className: 'text-center'
+      }, {
+        data: 'warehouse'
+        , name: 'warehouse_name'
         , orderable: false
-      , }, {
-        data: "gi_remarks"
-        , name: "gi_remarks"
+      }, {
+        data: 'remarks'
+        , name: 'gi_remarks'
         , orderable: false
-        , render: function(data, type, row) {
+        , render: function(data) {
           return data.length > 50 ? data.substr(0, 50) + '...' : data;
         }
-      , }, {
-        data: "name"
-        , name: "name"
+      }, {
+        data: 'user'
+        , name: 'name'
         , orderable: false
-        , className: "text-center"
-      , }, {
-        data: "action"
-        , name: "action"
+        , className: 'text-center'
+      }, {
+        data: 'workOrder'
+        , name: 'it_wo_id'
+        , orderable: false
+        , className: 'text-center'
+      }, {
+        data: 'status'
+        , name: 'gi_status'
+        , orderable: false
+        , className: 'text-center'
+      }, {
+        data: 'action'
+        , name: 'action'
         , orderable: false
         , searchable: false
-        , className: "text-center"
+        , className: 'text-center'
       }]
       , fixedColumns: true
-    , })
+    });
   });
 
 </script>

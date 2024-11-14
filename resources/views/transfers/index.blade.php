@@ -42,6 +42,7 @@
                     <th>To Warehouse</th>
                     <th width="30%">Remarks</th>
                     <th>Created By</th>
+                    <th>Status</th>
                     <th class="text-center" width="10%">Action</th>
                   </tr>
                 </thead>
@@ -143,6 +144,11 @@
       , }, {
         data: "name"
         , name: "name"
+        , orderable: false
+        , className: "text-center"
+      , }, {
+        data: "status"
+        , name: "trf_status"
         , orderable: false
         , className: "text-center"
       , }, {

@@ -32,47 +32,38 @@ class GoodReceiveController extends Controller
 
     public function getGoodReceive(Request $request)
     {
-        $goodreceives = GoodReceive::leftJoin('vendors', 'good_receives.vendor_id', '=', 'vendors.id')
+        $goodReceives = GoodReceive::selectRaw('
+            good_receives.*,
+            vendors.vendor_name,
+            warehouses.warehouse_name,
+            users.name
+        ')
+            ->leftJoin('vendors', 'good_receives.vendor_id', '=', 'vendors.id')
             ->leftJoin('warehouses', 'good_receives.warehouse_id', '=', 'warehouses.id')
             ->leftJoin('users', 'good_receives.user_id', '=', 'users.id')
-            ->select('good_receives.*', 'vendors.vendor_name', 'warehouses.warehouse_name', 'users.name')
-            ->orderBy('gr_doc_num', 'desc');
+            ->orderBy('gr_doc_num', 'desc')
+            ->get();
 
-        return datatables()->of($goodreceives)
+        return datatables()->of($goodReceives)
             ->addIndexColumn()
-            ->addColumn('gr_doc_num', function ($goodreceives) {
-                return $goodreceives->gr_doc_num;
-            })
-            ->addColumn('gr_posting_date', function ($goodreceives) {
-                return date('d-M-Y', strtotime($goodreceives->gr_posting_date));
-            })
-            ->addColumn('vendor_name', function ($goodreceives) {
-                return $goodreceives->vendor_name;
-            })
-            ->addColumn('warehouse_name', function ($goodreceives) {
-                return $goodreceives->warehouse_name;
-            })
-            ->addColumn('name', function ($goodreceives) {
-                return $goodreceives->name;
-            })
-            ->addColumn('gr_remarks', function ($goodreceives) {
-                return $goodreceives->gr_remarks;
-            })
+            ->editColumn('gr_posting_date', fn($goodReceive) => date('d-M-Y', strtotime($goodReceive->gr_posting_date)))
+            ->addColumn('status', fn($goodReceive) => '<span class="' . ($goodReceive->is_cancelled === 'yes' ? 'label label-danger' : 'label label-success') . '">' . ($goodReceive->is_cancelled === 'yes' ? 'Canceled' : 'Open') . '</span>')
             ->filter(function ($instance) use ($request) {
-                if (!empty($request->get('search'))) {
-                    $instance->where(function ($w) use ($request) {
-                        $search = $request->get('search');
-                        $w->orWhere('gr_doc_num', 'LIKE', "%$search%")
-                            ->orWhere('gr_posting_date', 'LIKE', "%$search%")
-                            ->orWhere('vendor_name', 'LIKE', "%$search%")
-                            ->orWhere('warehouse_name', 'LIKE', "%$search%")
-                            ->orWhere('name', 'LIKE', "%$search%")
-                            ->orWhere('gr_remarks', 'LIKE', "%$search%");
+                if ($request->has('search')) {
+                    $search = $request->get('search');
+                    $instance->collection = $instance->collection->filter(function ($row) use ($search) {
+                        return stripos($row['gr_doc_num'], $search) !== false
+                            || stripos($row['gr_posting_date'], $search) !== false
+                            || stripos($row['vendor_name'], $search) !== false
+                            || stripos($row['warehouse_name'], $search) !== false
+                            || stripos($row['gr_remarks'], $search) !== false
+                            || stripos($row['name'], $search) !== false
+                            || stripos($row['status'], $search) !== false;
                     });
                 }
             })
             ->addColumn('action', 'goodreceives.action')
-            ->rawColumns(['action'])
+            ->rawColumns(['status', 'action'])
             ->toJson();
     }
 
@@ -281,5 +272,53 @@ class GoodReceiveController extends Controller
         $subtitle = 'Good Receive';
 
         return view('goodreceives.print', compact('title', 'subtitle', 'goodreceive'));
+    }
+
+    public function cancel($id)
+    {
+        try {
+            DB::beginTransaction();
+
+            // Ambil dokumen good receive yang akan dibatalkan
+            $gr = GoodReceive::findOrFail($id);
+
+            // Periksa apakah dokumen sudah dibatalkan sebelumnya
+            if ($gr->is_cancelled === 'yes') {
+                return redirect()->back()->with('error', 'Good Receive document is already cancelled.');
+            }
+
+            // Ambil detail dari dokumen good receive
+            $grDetails = GrDetail::where('good_receive_id', $gr->id)->get();
+
+            // Cek stok untuk setiap item di good receive detail
+            foreach ($grDetails as $detail) {
+                $stockAvailable = app(InventoryController::class)->checkStockByParams($detail->item_id, $gr->warehouse_id, $detail->gr_qty);
+
+                // Jika stok tidak mencukupi, batalkan pembatalan
+                if (!$stockAvailable) {
+                    return redirect()->back()->with('error', 'Insufficient stock to cancel this Good Receive document.');
+                }
+            }
+
+            // Update status dokumen menjadi dibatalkan
+            $gr->gr_status = 'closed';
+            $gr->is_cancelled = 'yes';
+            $gr->save();
+
+            // Kembalikan stok ke inventory untuk setiap item
+            foreach ($grDetails as $detail) {
+                app(InventoryController::class)->transactionOut(
+                    $detail->item_id,
+                    $gr->warehouse_id,
+                    $detail->gr_qty
+                );
+            }
+
+            DB::commit();
+            return redirect()->route('goodreceive.index')->with('success', 'Good Receive cancelled successfully!');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->back()->with('error', $e->getMessage());
+        }
     }
 }

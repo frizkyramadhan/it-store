@@ -85,18 +85,21 @@ Route::group(['middleware' => ['auth']], function () {
     Route::get('goodreceive/receive-batch', [GoodReceiveController::class, 'receiveBatch'])->name('goodreceive.receivebatch');
     Route::get('goodreceive/forget', [GoodReceiveController::class, 'forget'])->name('goodreceives.forget');
     Route::get('goodreceive/{goodreceive}/print', [GoodReceiveController::class, 'print'])->name('goodreceive.print');
+    Route::post('goodreceive/{goodreceive}/cancel', [GoodReceiveController::class, 'cancel'])->name('goodreceive.cancel');
     Route::resource('goodreceive', GoodReceiveController::class);
 
     Route::get('goodissues/data', [GoodIssueController::class, 'getGoodIssue'])->name('goodissues.data');
     Route::get('goodissues/issue-batch', [GoodIssueController::class, 'issueBatch'])->name('goodissues.issuebatch');
     Route::get('goodissues/forget', [GoodIssueController::class, 'forget'])->name('goodissues.forget');
     Route::get('goodissues/{goodissue}/print', [GoodIssueController::class, 'print'])->name('goodissues.print');
+    Route::post('goodissues/{goodissue}/cancel', [GoodIssueController::class, 'cancel'])->name('goodissues.cancel');
     Route::resource('goodissues', GoodIssueController::class);
 
     Route::get('transfers/data', [TransferController::class, 'getTransfer'])->name('transfers.data');
     Route::get('transfers/transfer-batch', [TransferController::class, 'transferBatch'])->name('transfers.transferbatch');
     Route::get('transfers/{transfer}/print', [TransferController::class, 'print'])->name('transfers.print');
     Route::post('transfers/listWarehouses', [TransferController::class, 'listWarehouses'])->name('transfers.listwarehouses');
+    Route::post('transfers/{transfer}/cancel', [TransferController::class, 'cancel'])->name('transfers.cancel');
     Route::post('transfers/getTransferReference', [TransferController::class, 'getTransferReference'])->name('transfers.getTransferReference');
     Route::resource('transfers', TransferController::class);
 

@@ -30,51 +30,43 @@ class TransferController extends Controller
 
     public function getTransfer(Request $request)
     {
-        $transfers = Transfer::leftJoin('warehouses as w1', 'transfers.trf_from', '=', 'w1.id')
+        $transfers = Transfer::selectRaw('
+            transfers.*,
+            w1.warehouse_name as from_warehouse,
+            w2.warehouse_name as to_warehouse,
+            users.name
+        ')
+            ->leftJoin('warehouses as w1', 'transfers.trf_from', '=', 'w1.id')
             ->leftJoin('warehouses as w2', 'transfers.trf_to', '=', 'w2.id')
             ->leftJoin('users', 'transfers.user_id', '=', 'users.id')
-            ->select('transfers.*', 'w1.warehouse_name as from_warehouse', 'w2.warehouse_name as to_warehouse', 'users.name')
-            ->orderBy('trf_doc_num', 'desc');
+            ->orderBy('trf_doc_num', 'desc')
+            ->get();
 
         return datatables()->of($transfers)
             ->addIndexColumn()
-            ->addColumn('trf_doc_num', function ($transfers) {
+            ->editColumn('trf_doc_num', function ($transfers) {
                 return $transfers->trf_doc_num;
             })
-            ->addColumn('trf_posting_date', function ($transfers) {
+            ->editColumn('trf_posting_date', function ($transfers) {
                 return date('d-M-Y', strtotime($transfers->trf_posting_date));
             })
-            // ->addColumn('trf_type', function ($transfers) {
-            //     return $transfers->trf_type;
-            // })
-            ->addColumn('from_warehouse', function ($transfers) {
-                return $transfers->from_warehouse;
-            })
-            ->addColumn('to_warehouse', function ($transfers) {
-                return $transfers->to_warehouse;
-            })
-            ->addColumn('trf_remarks', function ($transfers) {
-                return $transfers->trf_remarks;
-            })
-            ->addColumn('name', function ($transfers) {
-                return $transfers->name;
-            })
+            ->addColumn('status', fn($transfers) => '<span class="' . ($transfers->is_cancelled === 'yes' ? 'label label-danger' : 'label label-success') . '">' . ($transfers->is_cancelled === 'yes' ? 'Canceled' : 'Open') . '</span>')
             ->filter(function ($instance) use ($request) {
-                if (!empty($request->get('search'))) {
-                    $instance->where(function ($w) use ($request) {
-                        $search = $request->get('search');
-                        $w->orWhere('trf_doc_num', 'LIKE', "%$search%")
-                            ->orWhere('trf_posting_date', 'LIKE', "%$search%")
-                            // ->orWhere('trf_type', 'LIKE', "%$search%")
-                            ->orWhere('w1.warehouse_name', 'LIKE', "%$search%")
-                            ->orWhere('w2.warehouse_name', 'LIKE', "%$search%")
-                            ->orWhere('trf_remarks', 'LIKE', "%$search%")
-                            ->orWhere('name', 'LIKE', "%$search%");
+                if ($request->has('search')) {
+                    $search = $request->get('search');
+                    $instance->collection = $instance->collection->filter(function ($row) use ($search) {
+                        return stripos($row['trf_doc_num'], $search) !== false
+                            || stripos($row['trf_posting_date'], $search) !== false
+                            || stripos($row['from_warehouse'], $search) !== false
+                            || stripos($row['to_warehouse'], $search) !== false
+                            || stripos($row['trf_remarks'], $search) !== false
+                            || stripos($row['name'], $search) !== false
+                            || stripos($row['status'], $search) !== false;
                     });
                 }
             })
             ->addColumn('action', 'transfers.action')
-            ->rawColumns(['action'])
+            ->rawColumns(['status', 'action'])
             ->toJson();
     }
 
@@ -350,5 +342,58 @@ class TransferController extends Controller
         $subtitle = 'Inventory Transfer';
 
         return view('transfers.print', compact('title', 'subtitle', 'transfer'));
+    }
+
+    public function cancel($id)
+    {
+        try {
+            DB::beginTransaction();
+
+            // Ambil dokumen good receive yang akan dibatalkan
+            $transfer = Transfer::findOrFail($id);
+
+            // Periksa apakah dokumen sudah dibatalkan sebelumnya
+            if ($transfer->trf_status === 'closed') {
+                return redirect()->back()->with('error', 'Transfer document is already cancelled.');
+            }
+
+            // Ambil detail dari dokumen good receive
+            $transferDetails = Trfdetail::where('transfer_id', $transfer->id)->get();
+
+            // Cek stok untuk setiap item di good receive detail
+            foreach ($transferDetails as $detail) {
+                $stockAvailable = app(InventoryController::class)->checkStockByParams($detail->item_id, $transfer->trf_to, $detail->trf_qty);
+
+                // Jika stok tidak mencukupi, batalkan pembatalan
+                if (!$stockAvailable) {
+                    return redirect()->back()->with('error', 'Insufficient stock to cancel this Transfer document.');
+                }
+            }
+
+            // Update status dokumen menjadi dibatalkan
+            $transfer->trf_status = 'closed';
+            $transfer->is_cancelled = 'yes';
+            $transfer->save();
+
+            // Kembalikan stok ke inventory untuk setiap item
+            foreach ($transferDetails as $detail) {
+                app(InventoryController::class)->transactionOut(
+                    $detail->item_id,
+                    $transfer->trf_to,
+                    $detail->trf_qty
+                );
+                app(InventoryController::class)->transactionIn(
+                    $detail->item_id,
+                    $transfer->trf_from,
+                    $detail->trf_qty
+                );
+            }
+
+            DB::commit();
+            return redirect()->route('transfers.index')->with('success', 'Transfer document cancelled successfully!');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->back()->with('error', $e->getMessage());
+        }
     }
 }

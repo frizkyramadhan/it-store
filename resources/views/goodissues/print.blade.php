@@ -44,7 +44,8 @@
                         </h3>
                       </div>
                       <div class="col-xs-4 invoice-header">
-                        <h1><small class="pull-right">{{ $goodissue->gi_doc_num }}</small></h1>
+                        <h1><small class="pull-right">{{ $goodissue->gi_doc_num }}</small></h1><br>
+                        <h4><small class="pull-right text-danger"><b>*{{ $goodissue->is_cancelled == 'yes' ? 'Canceled' : '' }}</b></small></h4>
                       </div>
                       <!-- /.col -->
                     </div>

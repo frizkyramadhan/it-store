@@ -83,6 +83,22 @@ class InventoryController extends Controller
         }
     }
 
+    public function checkStockByParams($item_id, $warehouse_id, $quantity)
+    {
+        // Cari stok berdasarkan item_id dan warehouse_id
+        $inventory = Inventory::where('item_id', $item_id)
+            ->where('warehouse_id', $warehouse_id)
+            ->first();
+
+        // Jika stok ada dan mencukupi, kembalikan true
+        if ($inventory && $inventory->stock >= $quantity) {
+            return true;
+        }
+
+        return false;
+    }
+
+
     public function batchIn($batch_id, $warehouse_id, $quantity)
     {
         // Update stok di tabel Inventory

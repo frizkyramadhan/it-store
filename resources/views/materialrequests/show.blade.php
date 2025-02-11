@@ -15,13 +15,17 @@
       <div class="col-md-12 col-sm-12 col-xs-12">
         <div class="x_panel">
           <div class="x_title">
-            <h2>{{ $subtitle }}<small class="text-danger"><b>*{{ $goodissue->is_cancelled == 'yes' ? 'Canceled' : '' }}</b></small></h2>
+            <h2>{{ $subtitle }}<small class="text-danger"><b>*{{ $materialrequest->is_cancelled == 'yes' ? 'Canceled' : '' }}</b></small></h2>
             <ul class="nav navbar-right panel_toolbox">
-              <form action="{{ route('goodissues.cancel', $goodissue->id) }}" method="POST">
-                <a href="{{ route('goodissues.index') }}" class="btn btn-success"><i class="fa fa-arrow-circle-left"></i> Back</a>
-                @if ($goodissue->is_cancelled != 'yes')
-                <a href="{{ route('goodissues.edit', $goodissue->id) }}" class="btn btn-warning"><i class="fa fa-pencil"></i> Edit</a>
-                <a href="{{ route('goodissues.print', $goodissue->id) }}" class="btn btn-info" target="_blank"><i class="fa fa-print"></i> Print</a>
+              <form action="{{ route('materialrequests.cancel', $materialrequest->id) }}" method="POST">
+                <a href="{{ route('materialrequests.index') }}" class="btn btn-success"><i class="fa fa-arrow-circle-left"></i> Back</a>
+                @if ($materialrequest->mr_status != 'closed')
+                <a href="{{ route('goodissues.create', ['mr_id' => $materialrequest->id]) }}" class="btn btn-primary">
+                  <i class="fa fa-copy"></i> Copy to GI
+                </a>
+
+                <a href="{{ route('materialrequests.edit', $materialrequest->id) }}" class="btn btn-warning"><i class="fa fa-pencil"></i> Edit</a>
+                {{-- <a href="{{ route('materialrequests.print', $materialrequest->id) }}" class="btn btn-info" target="_blank"><i class="fa fa-print"></i> Print</a> --}}
                 @csrf
                 <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure want to cancel this data?')"><i class="fa fa-times"></i> Cancel</button>
                 @endif
@@ -47,42 +51,38 @@
             <div class="col-md-6 col-xs-12 left-margin">
               <div class="form-group">
                 <label>Document No. <span class="required">*</span></label>
-                <input type="text" class="form-control" name="gi_doc_num" value="{{ $goodissue->gi_doc_num }}" required readonly>
+                <input type="text" class="form-control" name="mr_doc_num" value="{{ $materialrequest->mr_doc_num }}" required readonly>
               </div>
               <div class="form-group">
                 <label>Posting Date <span class="required">*</span></label>
-                <input type="text" class="form-control" name="gi_posting_date" value="{{ $goodissue->gi_posting_date }}" readonly>
-              </div>
-              <div class="form-group">
-                <label>MR No Reference</label>
-                <input type="text" class="form-control" id="mr_no" value="{{ $goodissue->materialRequest->mr_doc_num }}" readonly />
+                <input type="text" class="form-control" name="mr_posting_date" value="{{ $materialrequest->mr_posting_date }}" readonly>
               </div>
               <div class="form-group">
                 <label>Warehouse <span class="required">*</span></label>
-                <input type="text" class="form-control" name="warehouse_id" value="{{ $goodissue->warehouse->warehouse_name }}" readonly>
+                <input type="text" class="form-control" name="warehouse_id" value="{{ $materialrequest->warehouse->warehouse_name }}" readonly>
+              </div>
+              <div class="form-group">
+                <label>Project <span class="required">*</span></label>
+                <input type="text" class="form-control" name="project_id" value="{{ $materialrequest->project->project_code ?? "" }} - {{ $materialrequest->project->project_name ?? "" }}" readonly>
               </div>
             </div>
             <div class="col-md-6 col-xs-12 left-margin">
               <div class="form-group">
-                <label>Project <span class="required">*</span></label>
-                <input type="text" class="form-control" name="project_id" value="{{ $goodissue->project->project_code ?? "" }} - {{ $goodissue->project->project_name ?? "" }}" readonly>
-              </div>
-              <div class="form-group">
                 <label>Issue Purpose <span class="required">*</span></label>
-                <input type="text" class="form-control" name="issue_purpose_id" value="{{ $goodissue->issuepurpose->purpose_name ?? "" }}" readonly>
+                <input type="text" class="form-control" name="issue_purpose_id" value="{{ $materialrequest->issuepurpose->purpose_name ?? "" }}" readonly>
               </div>
               <div class="form-group">
                 <label>IT WO Reference</label>
                 <div class="input-group">
-                  <input @if($goodissue->it_wo_id) id="it_wo_id" @endif type="text" class="form-control" value="{{ $goodissue->it_wo_id }}" readonly />
+                  <input @if($materialrequest->it_wo_id) id="it_wo_id" @endif type="text" class="form-control" value="{{ $materialrequest->it_wo_id }}" readonly />
                   <span class="input-group-btn">
-                    <button id="itwoDetail" class="btn btn-primary" type="button" data-wo-id="{{ $goodissue->it_wo_id }}" data-toggle="modal" data-target="#itwoModal">Detail</button>
+                    <button id="itwoDetail" class="btn btn-primary" type="button" data-wo-id="{{ $materialrequest->it_wo_id }}" data-toggle="modal" data-target="#itwoModal">Detail</button>
                   </span>
                 </div>
               </div>
               <div class="form-group">
                 <label>Remarks</label>
-                <textarea class="form-control" rows="2" name="gi_remarks" readonly> {{ $goodissue->gi_remarks }}</textarea>
+                <textarea class="form-control" rows="4" name="mr_remarks" readonly> {{ $materialrequest->mr_remarks }}</textarea>
               </div>
             </div>
             <div class="col-md-12 col-xs-12 left-margin">
@@ -98,72 +98,28 @@
                           <th class="column-title" style="vertical-align: middle" width="15%">Item Code</th>
                           <th class="column-title" style="vertical-align: middle" width="35%" colspan="3">Description</th>
                           <th class="column-title text-right" style="vertical-align: middle" width="10%">Qty</th>
-                          <th class="column-title text-right" style="vertical-align: middle" width="10%">Price (IDR)</th>
-                          <th class="column-title text-right" style="vertical-align: middle" width="10%">Total</th>
                           <th class="column-title" style="vertical-align: middle" colspan="2">Line Remarks</th>
                         </tr>
                       </thead>
-                      @foreach ($goodissue->gidetails as $gidetail)
+                      @foreach ($materialrequest->mrdetails as $mrdetail)
                       <tbody>
                         <tr>
                           <td>
-                            <h5>{{ $gidetail->item->item_code }}</h5>
+                            <h5>{{ $mrdetail->item->item_code }}</h5>
                           </td>
                           <td colspan="3">
-                            <h5>{{ $gidetail->item->description }}</h5>
+                            <h5>{{ $mrdetail->item->description }}</h5>
                           </td>
                           <td class="text-right">
-                            <h5>{{ $gidetail->gi_qty }}</h5>
-                          </td>
-                          <td class="text-right">
-                            <h5>{{ number_format($gidetail->price, 2, ',', '.') }}</h5>
-                          </td>
-                          <td class="text-right">
-                            <h5>{{ number_format($gidetail->gi_line_total, 2, ',', '.') }}</h5>
+                            <h5>{{ $mrdetail->mr_qty }}</h5>
                           </td>
                           <td colspan="2">
-                            <h5>{{ $gidetail->gi_line_remarks }}</h5>
+                            <h5>{{ $mrdetail->mr_line_remarks }}</h5>
                           </td>
                         </tr>
-                        {{-- @if ($gidetail->item->is_batch == "yes")
-                        <tr class="headings">
-                          <th class="column-title" style="vertical-align: middle" width="15%">Batch Code</th>
-                          <th class="column-title" style="vertical-align: middle" width="12%">MFG</th>
-                          <th class="column-title" style="vertical-align: middle" width="12%">Expire Date</th>
-                          <th class="column-title" style="vertical-align: middle" width="12%">Expire Status</th>
-                          <th class="column-title text-center" style="vertical-align: middle" width="10%">Qty</th>
-                          <th class="column-title" style="vertical-align: middle">Batch Remarks</th>
-                          <th class="column-title" style="vertical-align: middle">Issue Purpose</th>
-                        </tr>
-                        @php
-                        $batches = app('App\Models\Batch')::select('batches.*', 'batch_transactions.batch_qty','batch_transactions.origin_no','batch_transactions.batch_remarks','batch_transactions.assign_to')->join('batch_transactions', 'batches.id', '=', 'batch_transactions.batch_id')->where('batch_transactions.origin_no', $goodissue->gi_doc_num)->where('item_id', $gidetail->item_id)->get();
-                        @endphp
-                        @foreach ($batches as $batch)
-                        <tr>
-                          <td>{{ $batch->batch_no }}</td>
-                        <td>{{ date('d-M-Y', strtotime($batch->mfg_date)) }}</td>
-                        <td>{{ date('d-M-Y', strtotime($batch->mfg_date . "+". $gidetail->item->shelf_life." months")) }}</td>
-                        <td>
-                          @if (date('Y-m-d') > date('Y-m-d', strtotime($batch->mfg_date . "+". $batch->item->shelf_life." months")))
-                          {{ "Expired" }}
-                          @else
-                          {{ "Non Expired" }}
-                          @endif
-                        </td>
-                        <td class="text-center">{{ $batch->batch_qty }}</td>
-                        <td>{{ $batch->batch_remarks }}</td>
-                        <td>{{ $batch->assign_to }}</td>
-                        </tr>
-                        @endforeach
-                        @endif --}}
                       </tbody>
                       @endforeach
                     </table>
-                    {{-- @dd($batches) --}}
-                    <div class="form-group text-right">
-                      <label>Total Cost (IDR)</label>
-                      <h3>{{ number_format($goodissue->total_cost ?? 0, 2, ',', '.') }}</h3>
-                    </div>
                   </div>
                 </div>
               </div>
@@ -270,12 +226,11 @@
 <script src="{{ asset('assets/vendors/jszip/dist/jszip.min.js') }}"></script>
 <script src="{{ asset('assets/vendors/pdfmake/build/pdfmake.min.js') }}"></script>
 <script src="{{ asset('assets/vendors/pdfmake/build/vfs_fonts.js') }}"></script>
-
 <script>
   $(document).ready(function() {
-    var goodIssue = {
-      itWoId: '{{ $goodissue->it_wo_id }}'
-      , itWoNo: '{{ $goodissue->it_wo_no }}'
+    var materialRequest = {
+      itWoId: '{{ $materialrequest->it_wo_id }}'
+      , itWoNo: '{{ $materialrequest->it_wo_no }}'
     };
 
     // Fungsi untuk mengambil data IT WO dari API
@@ -303,7 +258,7 @@
     }
 
     // Ketika halaman selesai dimuat, ambil data dan set nilai ke form
-    fetchItwoData(goodIssue.itWoId, function(data) {
+    fetchItwoData(materialRequest.itWoId, function(data) {
       $('#it_wo_id').val(data.no_wo);
     });
 
@@ -370,6 +325,5 @@
   });
 
 </script>
-
 
 @endsection

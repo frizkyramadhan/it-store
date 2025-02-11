@@ -36,6 +36,7 @@
               {{ session('error') }}
             </div>
             @endif
+
             <form id="form" data-parsley-validate class="form-horizontal form-label-left" action="{{ route('goodissues.store') }}" method="POST">
               @csrf
               <div class="col-md-6 col-xs-12 left-margin">
@@ -48,48 +49,58 @@
                   <input type="date" class="form-control" name="gi_posting_date" value="{{ $sessionData ? $sessionData['gi']['gi_posting_date'] : date('Y-m-d') }}" required>
                 </div>
                 <div class="form-group">
+                  <label>MR No Reference</label>
+                  <div class="input-group">
+                    <input type="text" class="form-control" id="mr_no" value="{{ $mr ? $mr->mr_doc_num : "" }}" readonly />
+                    <input type="hidden" class="form-control" id="mr_id" name="mr_id" value="{{ $mr ? $mr->id : "" }}" />
+                    <span class="input-group-btn">
+                      <button class="btn btn-primary" type="button" data-toggle="modal" data-target="#mrModal"><i class="fa fa-search"></i></button>
+                    </span>
+                  </div>
+                </div>
+                <div class="form-group">
                   <label>Warehouse <span class="required">*</span></label>
                   <select id="warehouse_id" class="select2 form-control" name="warehouse_id" style="width: 100%" required>
                     <option value="">Select Warehouse</option>
                     @foreach ($warehouses as $warehouse)
-                    <option value="{{ $warehouse->id }}" {{ $sessionData ? ($sessionData['gi']['warehouse_id'] == $warehouse->id ? "selected" : "") : "" }}>{{ $warehouse->warehouse_name }} ({{ $warehouse->bouwheer->bouwheer_name }})</option>
-                    @endforeach
-                  </select>
-                </div>
-                <div class="form-group">
-                  <label>Project <span class="required">*</span></label>
-                  <select id="project_id" class="select2 form-control" name="project_id" style="width: 100%" required>
-                    <option value="">Select Project</option>
-                    @foreach ($projects as $project)
-                    <option value="{{ $project->id }}" {{ $sessionData ? ($sessionData['gi']['project_id'] == $project->id ? "selected" : "") : "" }}>{{ $project->project_code }} - {{ $project->project_name }}</option>
+                    <option value="{{ $warehouse->id }}">{{ $warehouse->warehouse_name }} ({{ $warehouse->bouwheer->bouwheer_name }})</option>
                     @endforeach
                   </select>
                 </div>
               </div>
               <div class="col-md-6 col-xs-12 left-margin">
-
+                <div class="form-group">
+                  <label>Project <span class="required">*</span></label>
+                  <select id="project_id" class="select2 form-control" name="project_id" style="width: 100%" required>
+                    <option value="">Select Project</option>
+                    @foreach ($projects as $project)
+                    <option value="{{ $project->id }}">{{ $project->project_code }} - {{ $project->project_name }}</option>
+                    @endforeach
+                  </select>
+                </div>
                 <div class="form-group">
                   <label>Issue Purpose <span class="required">*</span></label>
                   <select id="issue_purpose_id" class="select2 form-control" name="issue_purpose_id" style="width: 100%" required>
                     <option value="">Select Issue Purpose</option>
                     @foreach ($issuepurposes as $issuepurpose)
-                    <option value="{{ $issuepurpose->id }}" {{ $sessionData ? ($sessionData['gi']['issue_purpose_id'] == $issuepurpose->id ? "selected" : "") : "" }}>{{ $issuepurpose->purpose_name }}</option>
+                    <option value="{{ $issuepurpose->id }}">{{ $issuepurpose->purpose_name }}</option>
                     @endforeach
                   </select>
                 </div>
                 <div class="form-group">
                   <label>IT WO Reference</label>
                   <div class="input-group">
-                    <input type="text" class="form-control" id="it_wo_no" value="{{ $sessionData ? $sessionData['gi']['it_wo_no'] : "" }}" readonly />
-                    <input type="hidden" class="form-control" id="it_wo_id" name="it_wo_id" value="{{ $sessionData ? $sessionData['gi']['it_wo_id'] : "" }}" />
+                    <input type="text" class="form-control" id="it_wo_no" value="" readonly />
+                    <input type="hidden" class="form-control" id="it_wo_id" name="it_wo_id" value="" />
                     <span class="input-group-btn">
-                      <button class="btn btn-primary" type="button" data-toggle="modal" data-target="#itwoModal">Search IT WO</button>
+                      <button class="btn btn-primary" type="button" data-toggle="modal" data-target="#itwoModal"><i class="fa fa-search"></i></button>
                     </span>
                   </div>
                 </div>
+
                 <div class="form-group">
                   <label>Remarks</label>
-                  <textarea class="form-control" rows="4" name="gi_remarks" required>{{ $sessionData ? $sessionData['gi']['gi_remarks'] : ""}}</textarea>
+                  <textarea class="form-control" rows="2" name="gi_remarks" required></textarea>
                 </div>
 
               </div>
@@ -115,7 +126,7 @@
                       </table>
                       <div class="form-group text-right">
                         <label>Total Cost (IDR)</label>
-                        <input id="total_cost" type="number" class="form-control" name="total_cost" readonly />
+                        <input id="total_cost" type="text" class="form-control" name="total_cost" readonly />
                         <input type="hidden" class="form-control" name="gi_status" value="open" />
                       </div>
                     </div>
@@ -135,7 +146,52 @@
   </div>
 </div>
 
-
+<div id="mrModal" class="modal fade" tabindex="-1" role="dialog" data-backdrop="static" data-keyboard="false">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">×</span>
+        </button>
+        <h4 class="modal-title">List of Material Request</h4>
+      </div>
+      <div class="modal-body">
+        <table id="mr_table" class="table table-striped jambo_table" width="100%">
+          <thead>
+            <tr class="headings">
+              <th class="column-title" width="1%" class="text-center">Action</th>
+              <th class="column-title">MR No</th>
+              <th class="column-title">Date</th>
+              <th class="column-title">Project</th>
+              <th class="column-title">Issue Purpose</th>
+              <th class="column-title">IT WO No.</th>
+              <th class="column-title">Remarks</th>
+            </tr>
+          </thead>
+          <tbody>
+            @foreach ($materialRequests as $materialRequest)
+            <tr>
+              <td>
+                <button class="btn btn-sm btn-info pick-mr" data-mr-id="{{ $materialRequest->id }}" data-mr-no="{{ $materialRequest->mr_doc_num }}">
+                  <i class="fa fa-check-square-o"></i> Pick!
+                </button>
+              </td>
+              <td>{{ $materialRequest->mr_doc_num }}</td>
+              <td>{{ $materialRequest->mr_posting_date }}</td>
+              <td>{{ $materialRequest->project->project_code }}</td>
+              <td>{{ $materialRequest->issuepurpose->purpose_name }}</td>
+              <td>{{ $materialRequest->it_wo_no }}</td>
+              <td>{{ $materialRequest->mr_remarks }}</td>
+            </tr>
+            @endforeach
+          </tbody>
+        </table>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <div id="itwoModal" class="modal fade" tabindex="-1" role="dialog" data-backdrop="static" data-keyboard="false">
   <div class="modal-dialog modal-lg">
@@ -256,12 +312,6 @@
 <link href="{{ asset('assets/vendors/datatables.net-responsive-bs/css/responsive.bootstrap.min.css') }}" rel="stylesheet">
 <link href="{{ asset('assets/vendors/datatables.net-scroller-bs/css/scroller.bootstrap.min.css') }}" rel="stylesheet">
 
-<style>
-  input[type="number"] {
-    text-align: right;
-  }
-
-</style>
 @endsection
 
 @section('scripts')
@@ -301,6 +351,54 @@
       document.querySelector(".select2-search__field").focus();
     });
 
+    // Apply right alignment to numeric inputs
+    function applyNumericInputStyles() {
+      $("[class*='gi-qty-']").css('text-align', 'right');
+      $("[class*='price-']").css('text-align', 'right');
+      $("[class*='gi-line-total-']").css('text-align', 'right');
+      $("#total_cost").css('text-align', 'right');
+    }
+
+    // Apply styles initially
+    applyNumericInputStyles();
+
+    $(document).on('click', '.pick-mr', function() {
+      const mrId = $(this).data('mr-id');
+      const mrNo = $(this).data('mr-no');
+
+      // Set values to the input fields
+      $('#mr_id').val(mrId);
+      $('#mr_no').val(mrNo);
+
+      // Get MR reference data
+      getMrReference(mrId);
+
+      // Close the modal
+      $('#mrModal').modal('hide');
+    });
+
+    // Function to format number with thousand separator
+    function formatRupiah(angka) {
+      let number_string = angka.toString().replace(/[^,\d]/g, '')
+        , split = number_string.split(',')
+        , sisa = split[0].length % 3
+        , rupiah = split[0].substr(0, sisa)
+        , ribuan = split[0].substr(sisa).match(/\d{3}/gi);
+
+      if (ribuan) {
+        separator = sisa ? '.' : '';
+        rupiah += separator + ribuan.join('.');
+      }
+
+      rupiah = split[1] !== undefined ? rupiah + ',' + split[1] : rupiah;
+      return rupiah;
+    }
+
+    // Function to parse formatted number back to float
+    function parseRupiah(rupiah) {
+      return parseFloat(rupiah.replace(/[^\d]/g, ''));
+    }
+
     // Variabel untuk melacak nomor baris
     addItemDetail(1); // Tambahkan baris pertama onload
     var rowCount = 2; // untuk row berikutnya saat di klik
@@ -311,33 +409,32 @@
       rowCount++; // Tingkatkan nomor baris setiap kali menambahkan baris
     });
 
-    // Fungsi untuk menghitung total pada setiap baris
+    // Modify calculateLineTotal function
     function calculateLineTotal(rowNumber) {
       var qty = parseFloat($(`.gi-qty-${rowNumber}`).val()) || 0;
-      var price = parseFloat($(`.price-${rowNumber}`).val()) || 0;
+      var price = parseRupiah($(`.price-${rowNumber}`).val()) || 0;
       var total = qty * price;
 
-      // Update kolom gi_line_total dengan hasil perkalian
-      $(`.gi-line-total-${rowNumber}`).val(total.toFixed(2));
+      // Update price with formatted value
+      $(`.price-${rowNumber}`).val(formatRupiah(price));
 
-      // Hitung ulang total semua baris
+      // Update gi_line_total with formatted value
+      $(`.gi-line-total-${rowNumber}`).val(formatRupiah(total));
+
+      // Calculate total cost
       calculateTotalCost();
     }
 
-    // Fungsi untuk menghitung total semua gi_line_total
+    // Modify calculateTotalCost function
     function calculateTotalCost() {
       var totalCost = 0;
 
-      // Debugging: Tampilkan elemen yang ditemukan
-      console.log("Elements found:");
       $("[class*='gi-line-total-']").each(function() {
-        console.log($(this).val()); // Debugging: Cetak nilai setiap elemen
-        var lineTotal = parseFloat($(this).val()) || 0;
+        var lineTotal = parseRupiah($(this).val()) || 0;
         totalCost += lineTotal;
       });
 
-      console.log("Total Cost:", totalCost); // Debugging: Tampilkan total biaya keseluruhan
-      $("#total_cost").val(totalCost.toFixed(2));
+      $("#total_cost").val(formatRupiah(totalCost));
     }
 
 
@@ -345,15 +442,18 @@
     function attachCalculationEvents(rowNumber) {
       // Saat input gi_qty diubah
       $(`.gi-qty-${rowNumber}`).on('keyup change', function() {
+        $(this).val(formatRupiah($(this).val()));
         calculateLineTotal(rowNumber);
       });
 
       // Saat input price diubah
       $(`.price-${rowNumber}`).on('keyup change', function() {
+        $(this).val(formatRupiah($(this).val()));
         calculateLineTotal(rowNumber);
       });
     }
 
+    // Fungsi untuk menambahkan baris baru
     function addItemDetail(rowNumber) {
       var tr = `<tr>
                     <td>
@@ -366,9 +466,9 @@
                     </div>
                     </td>
                     <td><input type="text" class="form-control description-${rowNumber}" readonly></td>
-                    <td><input type="number" class="form-control gi-qty-${rowNumber}" name="gi_qty[${rowNumber}]" required data-parsley-min="1" data-parsley-trigger="keyup" data-parsley-checkstock${rowNumber}></td>
-                    <td><input type="number" class="form-control price-${rowNumber}" name="price[${rowNumber}]" required></td>
-                    <td><input type="number" class="form-control gi-line-total-${rowNumber}" name="gi_line_total[${rowNumber}]" readonly></td>
+                    <td><input type="text" class="form-control gi-qty-${rowNumber}" name="gi_qty[${rowNumber}]" required data-parsley-min="1" data-parsley-trigger="keyup" data-parsley-checkstock${rowNumber}autocomplete="off"></td>
+                    <td><input type="text" class="form-control price-${rowNumber}" name="price[${rowNumber}]" required autocomplete="off"></td>
+                    <td><input type="text" class="form-control gi-line-total-${rowNumber}" name="gi_line_total[${rowNumber}]" readonly></td>
                     <td><input type="text" class="form-control gi-line-remarks-${rowNumber}" name="gi_line_remarks[${rowNumber}]"></td>
                     <td><button type="button" class="btn btn-danger remove-input-field"><i class="fa fa-times"></i></button></td>
                 </tr>`;
@@ -376,6 +476,9 @@
 
       // Attach event untuk kalkulasi otomatis pada gi_qty dan price
       attachCalculationEvents(rowNumber);
+
+      // Apply right alignment to new numeric inputs
+      applyNumericInputStyles();
 
       // Hitung ulang total setelah baris baru ditambahkan
       calculateTotalCost();
@@ -440,7 +543,6 @@
         , });
       });
 
-      // Tambahkan event handler untuk menghapus baris
       // Tambahkan event handler untuk menghapus baris
       $(document).on("click", ".remove-input-field", function() {
         $(this).parents("tr").remove();
@@ -509,33 +611,49 @@
         }
       );
 
-      // $(`.gi-qty-${rowNumber}`).parsley();
-      $('#form').parsley();
-      window.Parsley
-        .addValidator(`checkstock${rowNumber}`, {
-          validateNumber: function(value, requirements, instance) {
-            var warehouse_id = $('#warehouse_id').val(); // Ganti dengan ID input warehouse
-            var item_id = $(`.item-id-${rowNumber}`).val(); // Ganti dengan ID input item_id
+      // Add validator first, outside the form submit handler
+      window.Parsley.addValidator(`checkstock${rowNumber}`, {
+        validateNumber: function(value, requirements, instance) {
+          var warehouse_id = $('#warehouse_id').val();
+          var item_id = $(`.item-id-${rowNumber}`).val();
 
-            return $.ajax({
-              url: "{{ route('inventories.checkStock') }}"
-              , method: "POST"
-              , data: {
-                gi_qty: value
-                , warehouse_id: warehouse_id
-                , item_id: item_id
-                , _token: '{!! csrf_token() !!}'
-              }
-              , dataType: "json"
-              , success: function(data) {
-                return data.success; // Kembalikan true atau false dari respons JSON
-              }
-            });
-          }
-          , messages: {
-            en: 'Quantity falls into negative' // Pesan jika validasi gagal
-          }
+          return $.ajax({
+            url: "{{ route('inventories.checkStock') }}"
+            , method: "POST"
+            , data: {
+              gi_qty: value
+              , warehouse_id: warehouse_id
+              , item_id: item_id
+              , _token: '{!! csrf_token() !!}'
+            }
+            , dataType: "json"
+            , success: function(data) {
+              return data.success;
+            }
+          });
+        }
+        , messages: {
+          en: 'Quantity falls into negative'
+        }
+      });
+
+      // Then handle the form submission
+      $('#form').parsley().on('form:submit', function() {
+        // Remove formatting from all price inputs
+        $("[class*='price-']").each(function() {
+          $(this).val(parseRupiah($(this).val()));
         });
+
+        // Remove formatting from all line total inputs
+        $("[class*='gi-line-total-']").each(function() {
+          $(this).val(parseRupiah($(this).val()));
+        });
+
+        // Remove formatting from total cost
+        $("#total_cost").val(parseRupiah($("#total_cost").val()));
+
+        return true; // Allow form submission to continue
+      });
     }
 
     // Fungsi autocomplete yang dapat digunakan kembali
@@ -775,7 +893,105 @@
       });
     });
 
+    @if(isset($mr))
+    getMrReference(`{{ $mr->id}}`);
+    @endif
 
+    function getMrReference(mrId) {
+      $.ajax({
+        url: "{{ url('goodsissues/get-mr-reference') }}/" + mrId
+        , type: "GET"
+        , dataType: "json"
+        , success: function(data) {
+          if (data.success) {
+            // Reset existing table rows
+            $("#inputTable tr:not(:first)").remove();
+
+            // Set header/main form values
+            $('#warehouse_id').val(data.data.warehouse_id).trigger('change');
+            $('#project_id').val(data.data.project_id).trigger('change');
+            $('#issue_purpose_id').val(data.data.issue_purpose_id).trigger('change');
+            $('#it_wo_id').val(data.data.it_wo_id);
+            $('#it_wo_no').val(data.data.it_wo_no);
+            $('textarea[name="gi_remarks"]').val(data.data.mr_remarks);
+
+            // Add MR items to table
+            data.data.mrdetails.forEach(function(item, index) {
+              // Change to use index + 1 for rowNumber
+              const rowNumber = index + 1;
+
+              // Add new row
+              const tr = `<tr>
+              <td>
+                <div class="input-group">
+                  <input type="hidden" class="form-control item-id-${rowNumber}" name="item_id[${rowNumber}]" value="${item.item_id}" required>
+                  <input type="text" class="form-control item-code-${rowNumber}" name="item_code[${rowNumber}]" value="${item.item.item_code}" required readonly>
+                  <span class="input-group-btn">
+                    <button type="button" class="btn btn-primary search-item-${rowNumber}"><i class="fa fa-search"></i></button>
+                  </span>
+                </div>
+              </td>
+              <td><input type="text" class="form-control description-${rowNumber}" value="${item.item.description}" readonly></td>
+              <td><input type="text" class="form-control gi-qty-${rowNumber}" name="gi_qty[${rowNumber}]" value="${item.mr_qty}" required data-parsley-min="1" data-parsley-trigger="keyup" data-parsley-checkstock${rowNumber} autocomplete="off"></td>
+              <td><input type="text" class="form-control price-${rowNumber}" name="price[${rowNumber}]" required autocomplete="off"></td>
+              <td><input type="text" class="form-control gi-line-total-${rowNumber}" name="gi_line_total[${rowNumber}]" readonly></td>
+              <td><input type="text" class="form-control gi-line-remarks-${rowNumber}" name="gi_line_remarks[${rowNumber}]" value="${item.mr_line_remarks || ''}"></td>
+              <td><button type="button" class="btn btn-danger remove-input-field"><i class="fa fa-times"></i></button></td>
+            </tr>`;
+
+              $("#inputTable").append(tr);
+
+              // Attach event untuk kalkulasi otomatis pada gi_qty dan price
+              attachCalculationEvents(rowNumber);
+
+              // Apply right alignment to new numeric inputs
+              applyNumericInputStyles();
+
+              // Hitung ulang total setelah baris baru ditambahkan
+              calculateTotalCost();
+
+              // Inisialisasi autocomplete pada elemen "item-code" dalam baris baru
+              initializeAutocomplete($(`.item-code-${rowNumber}`), rowNumber);
+
+              // Add Parsley validation for stock check
+              window.Parsley
+                .addValidator(`checkstock${rowNumber}`, {
+                  validateNumber: function(value, requirements, instance) {
+                    var warehouse_id = $('#warehouse_id').val();
+                    var item_id = $(`.item-id-${rowNumber}`).val();
+
+                    return $.ajax({
+                      url: "{{ route('inventories.checkStock') }}"
+                      , method: "POST"
+                      , data: {
+                        gi_qty: value
+                        , warehouse_id: warehouse_id
+                        , item_id: item_id
+                        , _token: '{!! csrf_token() !!}'
+                      }
+                      , dataType: "json"
+                    });
+                  }
+                  , messages: {
+                    en: 'Quantity falls into negative'
+                  }
+                });
+            });
+
+            // Update global rowCount to match the number of items
+            rowCount = data.data.mrdetails.length + 1;
+
+            // Calculate initial totals
+            calculateTotalCost();
+          } else {
+            console.error("Error loading MR reference data");
+          }
+        }
+        , error: function(xhr, status, error) {
+          console.error("AJAX Error:", error);
+        }
+      });
+    }
   });
 
 </script>

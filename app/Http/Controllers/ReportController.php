@@ -64,6 +64,59 @@ class ReportController extends Controller
         return view('reports.goodreceive', compact('title', 'subtitle', 'vendors', 'warehouses', 'results'));
     }
 
+    public function materialRequest(Request $request)
+    {
+        $title = 'Reports';
+        $subtitle = 'Material Request Report';
+        $results  = null;
+
+        $warehouses = Warehouse::with('bouwheer')
+            ->where('warehouse_status', 'active')
+            ->where('warehouse_type', 'main')
+            ->orderBy('warehouse_name', 'asc')
+            ->get();
+
+        $projects = Project::where('project_status', 'active')->orderBy('project_code', 'asc')->get();
+
+        $query = DB::table('material_requests')
+            ->leftJoin('mr_details', 'material_requests.id', '=', 'mr_details.material_request_id')
+            ->leftJoin('items', 'mr_details.item_id', '=', 'items.id')
+            // ->leftJoin('types', 'items.type_id', '=', 'types.id')
+            ->leftJoin('groups', 'items.group_id', '=', 'groups.id')
+            ->leftJoin('projects', 'material_requests.project_id', '=', 'projects.id')
+            ->leftJoin('warehouses', 'material_requests.warehouse_id', '=', 'warehouses.id')
+            ->leftJoin('bouwheers', 'warehouses.bouwheer_id', '=', 'bouwheers.id')
+            ->leftJoin('users', 'material_requests.user_id', '=', 'users.id')
+            ->select('material_requests.*', 'mr_qty', 'mr_line_remarks', 'item_code', 'description', 'group_name', 'project_code', 'warehouse_name', 'bouwheer_name', 'name')
+            ->orderBy('material_requests.id', 'desc');
+
+        $conditions = [];
+
+        if ($request->filled('from') && $request->filled('to')) {
+            $conditions[] = ['mr_posting_date', '>=', $request->input('from')];
+            $conditions[] = ['mr_posting_date', '<=', $request->input('to')];
+        }
+
+        if ($request->filled('project_id')) {
+            $conditions[] = ['material_requests.project_id', '=', $request->input('project_id')];
+        }
+
+        if ($request->filled('warehouse_id')) {
+            $conditions[] = ['material_requests.warehouse_id', '=', $request->input('warehouse_id')];
+        }
+
+        if ($request->filled('remarks')) {
+            $conditions[] = ['mr_remarks', 'like', '%' . $request->input('remarks') . '%'];
+        }
+
+        if (!empty($conditions)) {
+            $query->where($conditions);
+            $results = $query->get();
+        }
+
+        return view('reports.materialrequest', compact('title', 'subtitle', 'projects', 'warehouses', 'results'));
+    }
+
     public function goodIssue(Request $request)
     {
         $title = 'Reports';

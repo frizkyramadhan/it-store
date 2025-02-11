@@ -11,6 +11,7 @@ use App\Models\Warehouse;
 use Illuminate\Support\Arr;
 use App\Models\IssuePurpose;
 use Illuminate\Http\Request;
+use App\Models\MaterialRequest;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Session;
@@ -89,11 +90,31 @@ class GoodIssueController extends Controller
         return $response['data'][0]['no_wo'] ?? '-';
     }
 
+    public function getMrReference($id)
+    {
+        $mr = MaterialRequest::with(['mrdetails.item', 'project', 'warehouse'])
+            ->find($id);
+
+        if ($mr->mr_status === 'closed') {
+            return response()->json([
+                'success' => 'false',
+                'message' => 'Material Request is already closed.'
+            ], 422);
+        }
+        // tambahkan keterangan IT WO dari function getWorkOrder
+        $mr->it_wo_no = $this->getWorkOrder($mr->it_wo_id);
+
+        return response()->json([
+            'success' => 'true',
+            'data' => $mr
+        ]);
+    }
+
 
     /**
      * Show the form for creating a new resource.
      */
-    public function create()
+    public function create(Request $request)
     {
         $title = 'Inventory Transactions';
         $subtitle = 'Good Issue';
@@ -110,12 +131,23 @@ class GoodIssueController extends Controller
 
         $items = Item::where('item_status', 'active')->orderBy('item_code', 'asc')->get();
 
+        $materialRequests = MaterialRequest::where('mr_status', 'open')->orderBy('mr_doc_num', 'desc')->get();
+        // tambahkan keterangan IT WO dari function getWorkOrder
+        foreach ($materialRequests as $mr) {
+            $mr->it_wo_no = $this->getWorkOrder($mr->it_wo_id);
+        }
+
         $sessionData = Session::get('gi_transaction');
 
         // generate gr number
         $gi_no = static::generateDocNum();
 
-        return view('goodissues.create', compact('title', 'subtitle', 'warehouses', 'projects', 'issuepurposes', 'items', 'gi_no', 'sessionData'));
+        $mr = null;
+        if ($request->mr_id) {
+            $mr = MaterialRequest::with(['mrdetails.item', 'project', 'warehouse'])->find($request->mr_id);
+        }
+
+        return view('goodissues.create', compact('title', 'subtitle', 'warehouses', 'projects', 'issuepurposes', 'items', 'gi_no', 'sessionData', 'mr', 'materialRequests'));
     }
 
     /**
@@ -153,12 +185,18 @@ class GoodIssueController extends Controller
             $gi->project_id = $data['project_id'];
             $gi->issue_purpose_id = $data['issue_purpose_id'];
             $gi->it_wo_id = $data['it_wo_id'] ?? null;
+            $gi->material_request_id = $data['mr_id'] ?? null; // Add this line
             $gi->gi_remarks = $data['gi_remarks'];
             $gi->gi_status = $data['gi_status'];
             $gi->total_cost = $data['total_cost'];
             $gi->is_cancelled = 'no';
             $gi->user_id = auth()->user()->id;
             $gi->save();
+
+            if ($request->input('mr_id')) {
+                MaterialRequest::where('id', $request->input('mr_id'))
+                    ->update(['mr_status' => 'closed']);
+            }
 
             $check = Arr::exists($data, 'item_id');
             if ($check == true) {

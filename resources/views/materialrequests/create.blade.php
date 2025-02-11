@@ -17,7 +17,7 @@
                     <div class="x_title">
                         <h2>{{ $subtitle }}</h2>
                         <ul class="nav navbar-right panel_toolbox">
-                            <a href="{{ url('transfers') }}" class="btn btn-success"><i class="fa fa-arrow-circle-left"></i> Back</a>
+                            <a href="{{ url()->previous() }}" class="btn btn-success"><i class="fa fa-arrow-circle-left"></i> Back</a>
                         </ul>
                         <div class="clearfix"></div>
                     </div>
@@ -36,143 +36,167 @@
                             {{ session('error') }}
                         </div>
                         @endif
-                        <form id="form" data-parsley-validate class="form-horizontal form-label-left" action="{{ route('transfers.store') }}" method="POST">
+                        <form id="form" data-parsley-validate class="form-horizontal form-label-left" action="{{ route('materialrequests.store') }}" method="POST">
                             @csrf
                             <div class="col-md-6 col-xs-12 left-margin">
                                 <div class="form-group">
                                     <label>Document No. <span class="required">*</span></label>
-                                    <input type="text" class="form-control" name="trf_doc_num" value="{{ $sessionData ? $sessionData['trf']['trf_doc_num'] : $trf_no }}" required readonly>
+                                    <input type="text" class="form-control" name="mr_doc_num" value="{{ $sessionData ? $sessionData['mr']['mr_doc_num'] : $mr_no }}" required readonly>
                                 </div>
                                 <div class="form-group">
                                     <label>Posting Date <span class="required">*</span></label>
-                                    <input type="date" class="form-control" name="trf_posting_date" value="{{ $sessionData ? $sessionData['trf']['trf_posting_date'] : date('Y-m-d') }}" required>
+                                    <input type="date" class="form-control" name="mr_posting_date" value="{{ $sessionData ? $sessionData['mr']['mr_posting_date'] : date('Y-m-d') }}" required>
                                 </div>
-                                {{-- <div class="form-group">
-                  <label>Transfer Type <span class="required">*</span></label>
-                  <select id="trf_type" class="select2 form-control" name="trf_type" style="width: 100%" required>
-                    <option value="">Select Type</option>
-                    <option value="out">OUT</option>
-                    <option value="in">IN</option>
-                  </select>
-                </div>
-                <div id="reference" class="form-group">
-                  <label>Reference No.</label>
-                  <div class="input-group">
-                    <input id="trf_ref_num" type="text" class="form-control" name="trf_ref_num" value="{{ $sessionData ? $sessionData['trf']['trf_ref_num'] : "" }}" placeholder="ITO Number" readonly>
-                                <span class="input-group-btn">
-                                    <button type="button" class="btn btn-primary search-reference"><i class="fa fa-ellipsis-h"></i></button>
-                                </span>
+                                <div class="form-group">
+                                    <label>Warehouse <span class="required">*</span></label>
+                                    <select id="warehouse_id" class="select2 form-control" name="warehouse_id" style="width: 100%" required>
+                                        <option value="">Select Warehouse</option>
+                                        @foreach ($warehouses as $warehouse)
+                                        <option value="{{ $warehouse->id }}" {{ $sessionData ? ($sessionData['mr']['warehouse_id'] == $warehouse->id ? "selected" : "") : "" }}>{{ $warehouse->warehouse_name }} ({{ $warehouse->bouwheer->bouwheer_name }})</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Project <span class="required">*</span></label>
+                                    <select id="project_id" class="select2 form-control" name="project_id" style="width: 100%" required>
+                                        <option value="">Select Project</option>
+                                        @foreach ($projects as $project)
+                                        <option value="{{ $project->id }}" {{ $sessionData ? ($sessionData['mr']['project_id'] == $project->id ? "selected" : "") : "" }}>{{ $project->project_code }} - {{ $project->project_name }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
                             </div>
-                    </div> --}}
-                </div>
-                <div class="col-md-6 col-xs-12 left-margin">
-                    <div class="form-group">
-                        <label>From Warehouse <span class="required">*</span></label>
-                        <select id="from_warehouse" class="select2 form-control" name="trf_from" style="width: 100%" required>
-                            <option value="">Select Warehouse</option>
-                            @foreach ($warehouses as $warehouse)
-                            <option value="{{ $warehouse->id }}">{{ $warehouse->warehouse_name }} ({{ $warehouse->bouwheer->bouwheer_name }})</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>To Warehouse <span class="required">*</span></label>
-                        <select id="to_warehouse" class="select2 form-control" name="trf_to" style="width: 100%" required data-parsley-check-warehouses>
-                            <option value="">Select Warehouse</option>
-                            @foreach ($warehouses as $warehouse)
-                            <option value="{{ $warehouse->id }}">{{ $warehouse->warehouse_name }} ({{ $warehouse->bouwheer->bouwheer_name }})</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>Remarks</label>
-                        <textarea id="trf_remarks" class="form-control" rows="3" name="trf_remarks" required>{{ $sessionData ? $sessionData['trf']['trf_remarks'] : "" }}</textarea>
-                    </div>
-                </div>
-                {{-- inventory detail --}}
-                <div class="col-md-12 col-xs-12 left-margin">
-                    <div class="row x_title">
-                        <div class="col-md-6">
-                            <h3>Contents</h3>
-                        </div>
-                        <div class="x_content">
-                            <div class="table-responsive">
-                                <table id="inputTable" class="table table-striped jambo_table">
-                                    <thead>
-                                        <tr class="headings">
-                                            <th class="column-title" style="vertical-align: middle" width="25%">Item Code</th>
-                                            <th class="column-title" style="vertical-align: middle" width="25%">Description</th>
-                                            <th class="column-title" style="vertical-align: middle" width="10%">Quantity</th>
-                                            <th class="column-title" style="vertical-align: middle">Line Remarks</th>
-                                            <th class="column-title" style="vertical-align: middle" width="5%"><button type="button" id="dynamic-ar" class="btn btn-primary"><i class="fa fa-plus"></i></button></th>
-                                        </tr>
-                                    </thead>
-                                </table>
+                            <div class="col-md-6 col-xs-12 left-margin">
+                                <div class="form-group">
+                                    <label>Issue Purpose <span class="required">*</span></label>
+                                    <select id="issue_purpose_id" class="select2 form-control" name="issue_purpose_id" style="width: 100%" required>
+                                        <option value="">Select Issue Purpose</option>
+                                        @foreach ($issuepurposes as $issuepurpose)
+                                        <option value="{{ $issuepurpose->id }}" {{ $sessionData ? ($sessionData['mr']['issue_purpose_id'] == $issuepurpose->id ? "selected" : "") : "" }}>{{ $issuepurpose->purpose_name }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>IT WO Reference</label>
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" id="it_wo_no" value="{{ $sessionData ? $sessionData['mr']['it_wo_no'] : "" }}" readonly />
+                                        <input type="hidden" class="form-control" id="it_wo_id" name="it_wo_id" value="{{ $sessionData ? $sessionData['mr']['it_wo_id'] : "" }}" />
+                                        <span class="input-group-btn">
+                                            <button class="btn btn-primary" type="button" data-toggle="modal" data-target="#itwoModal">Search IT WO</button>
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label>Remarks</label>
+                                    <textarea class="form-control" rows="4" name="mr_remarks" required>{{ $sessionData ? $sessionData['mr']['mr_remarks'] : ""}}</textarea>
+                                    <input type="hidden" class="form-control" name="mr_status" value="open" />
+                                </div>
                             </div>
-                        </div>
+                            <div class="col-md-12 col-xs-12 left-margin">
+                                <div class="row x_title">
+                                    <div class="col-md-6">
+                                        <h3>Contents</h3>
+                                    </div>
+                                    <div class="x_content">
+                                        <div class="table-responsive">
+                                            <table id="inputTable" class="table table-striped jambo_table" width="100%">
+                                                <thead>
+                                                    <tr class="headings">
+                                                        <th class="column-title" style="vertical-align: middle" width="25%">Item Code</th>
+                                                        <th class="column-title" style="vertical-align: middle" width="25%">Description</th>
+                                                        <th class="column-title" style="vertical-align: middle" width="10%">Quantity</th>
+                                                        <th class="column-title" style="vertical-align: middle">Line Remarks</th>
+                                                        <th class="column-title text-center" style="vertical-align: middle" width="5%"><button type="button" id="dynamic-ar" class="btn btn-primary"><i class="fa fa-plus"></i></button></th>
+                                                    </tr>
+                                                </thead>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-12 col-xs-12 left-margin">
+                                <div class="form-group pull-right">
+                                    <button type="submit" class="btn btn-primary"><i class="fa fa-save"></i> Submit</button>
+                                </div>
+                            </div>
+                        </form>
                     </div>
                 </div>
-                <div class="col-md-12 col-xs-12 left-margin">
-                    <div class="form-group pull-right">
-                        <button type="submit" class="btn btn-primary"><i class="fa fa-save"></i> Submit</button>
-                    </div>
-                </div>
-                </form>
             </div>
         </div>
     </div>
 </div>
-</div>
+
+<div id="itwoModal" class="modal fade" tabindex="-1" role="dialog" data-backdrop="static" data-keyboard="false">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">×</span>
+                </button>
+                <h4 class="modal-title">Search IT WO</h4>
+            </div>
+            <div class="modal-body">
+                <div class="col-md-3 col-sm-12 col-xs-12 form-group">
+                    <input id="date" type="date" name="date" placeholder="Date" class="form-control" value="{{ @$post['date'] }}">
+                </div>
+                <div class="col-md-3 col-sm-12 col-xs-12 form-group">
+                    {{-- <input id="kode_project" type="text" name="kode_project" placeholder="Project" class="form-control" value="{{ @$post['kode_project'] }}"> --}}
+                    <select id="kode_project" class="form-control" name="kode_project" style="width: 100%">
+                        <option value="">Select Project</option>
+                        @foreach ($projects as $project)
+                        <option value="{{ $project->project_code }}">{{ $project->project_code }} - {{ $project->project_name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div class="col-md-3 col-sm-12 col-xs-12 form-group">
+                    <input id="nik" type="text" name="nik" placeholder="NIK" class="form-control" value="{{ @$post['nik'] }}">
+                </div>
+
+                <div class="col-md-3 col-sm-12 col-xs-12 form-group">
+                    <input id="name" type="text" name="name" placeholder="Name" class="form-control" value="{{ @$post['name'] }}">
+                </div>
+
+                <div class="col-md-3 col-sm-12 col-xs-12 form-group">
+                    <input id="no_wo" type="text" name="no_wo" placeholder="IT WO No." class="form-control" value="{{ @$post['no_wo'] }}">
+                </div>
+
+                <div class="col-md-3 col-sm-12 col-xs-12 form-group">
+                    <input id="issue" type="text" name="issue" placeholder="Issue" class="form-control" value="{{ @$post['issue'] }}">
+                </div>
+
+                <div class="col-md-3 col-sm-12 col-xs-12 form-group">
+                    {{-- <input id="status" type="text" name="status" placeholder="Status" class="form-control" value="{{ @$post['status'] }}"> --}}
+                    <select id="status" name="status" class="form-control">
+                        <option value="">Select Status</option>
+                        <option value="waiting" {{ @$post['status'] == 'waiting' ? 'selected' : '' }}>Waiting</option>
+                        <option value="process" {{ @$post['status'] == 'process' ? 'selected' : '' }}>Process</option>
+                        <option value="finished" {{ @$post['status'] == 'finished' ? 'selected' : '' }}>Finished</option>
+                        <option value="canceled" {{ @$post['status'] == 'canceled' ? 'selected' : '' }}>Canceled</option>
+                    </select>
+                </div>
+
+                <div class="col-md-3 col-sm-12 col-xs-12 form-group">
+                    <div class="text-center">
+                        <button id="search_button" type="submit" class="btn btn-success">Search</button>
+                        <button id="reset_button" class="btn btn-primary" type="reset">Reset</button>
+                    </div>
+                </div>
+
+                <div id="search_result">
+                </div>
+                <div id="error" class="col-md-12 col-sm-12 col-xs-12 form-group">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            </div>
+
+        </div>
+    </div>
 </div>
 
-{{-- list ITO --}}
-{{-- <div id="referenceModal" class="modal fade" tabindex="-1" role="dialog" data-backdrop="static" data-keyboard="false">
-  <div class="modal-dialog modal-lg" role="document">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h4 class="modal-title">List of Inventory Transfer OUT</h4>
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-          <span aria-hidden="true">&times;</span>
-        </button>
-      </div>
-      <div class="x_content">
-        <div class="modal-body">
-          <table id="datatable" class="table jambo_table" width="100%">
-            <thead>
-              <tr class="headings">
-                <th class="column-title">No</th>
-                <th class="column-title">Document No</th>
-                <th class="column-title">Posting Date</th>
-                <th class="column-title">From Whs</th>
-                <th class="column-title">To Whs</th>
-                <th class="column-title text-center" width="10%">Action</th>
-              </tr>
-            </thead>
-            @foreach ($transferOuts as $out)
-            <tbody>
-              <tr class="lists">
-                <td>{{ $loop->iteration }}</td>
-<td>{{ $out->trf_doc_num }}</td>
-<td>{{ $out->trf_posting_date }}</td>
-<td>{{ $out->fromWarehouse->warehouse_name }}</td>
-<td>{{ $out->toWarehouse->warehouse_name }}</td>
-<td class="text-center">
-    <button type="button" class="btn btn-primary btn-sm pick-ref" data-transferid="{{ $out->id }}"><i class="fa fa-check-square-o"></i> Pick!</button>
-</td>
-</tr>
-</tbody>
-@endforeach
-</table>
-</div>
-</div>
-<div class="modal-footer">
-    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-</div>
-</div>
-</div>
-</div> --}}
-
-{{-- list item --}}
 <div id="itemModal" class="modal fade" tabindex="-1" role="dialog" data-backdrop="static" data-keyboard="false">
     <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">
@@ -187,11 +211,10 @@
                     <table id="datatable-serverside" class="table table-striped jambo_table" width="100%">
                         <thead>
                             <tr class="headings">
-                                <th class="column-title text-center" width="1%">Action</th>
+                                <th class="column-title" width="1%" class="text-center">Action</th>
                                 <th class="column-title">Item Code</th>
                                 <th class="column-title">Description</th>
                                 <th class="column-title">Stock</th>
-                                {{-- <th class="column-title">Type</th> --}}
                                 <th class="column-title">Group</th>
                                 <th class="column-title">Status</th>
                             </tr>
@@ -221,6 +244,13 @@
 <link href="{{ asset('assets/vendors/datatables.net-fixedheader-bs/css/fixedHeader.bootstrap.min.css') }}" rel="stylesheet">
 <link href="{{ asset('assets/vendors/datatables.net-responsive-bs/css/responsive.bootstrap.min.css') }}" rel="stylesheet">
 <link href="{{ asset('assets/vendors/datatables.net-scroller-bs/css/scroller.bootstrap.min.css') }}" rel="stylesheet">
+
+<style>
+    input[type="number"] {
+        text-align: right;
+    }
+
+</style>
 @endsection
 
 @section('scripts')
@@ -248,8 +278,10 @@
 <script src="{{ asset('assets/vendors/jszip/dist/jszip.min.js') }}"></script>
 <script src="{{ asset('assets/vendors/pdfmake/build/pdfmake.min.js') }}"></script>
 <script src="{{ asset('assets/vendors/pdfmake/build/vfs_fonts.js') }}"></script>
-{{-- <script src="{{ asset('assets/build/js/itemTransaction.js') }}"></script> --}}
 <script>
+    // Set variabel global untuk data-type item transaction
+    // window.dataType = "gi";
+
     $(document).ready(function() {
         $(".select2").select2();
 
@@ -257,89 +289,7 @@
             document.querySelector(".select2-search__field").focus();
         });
 
-        // hide id reference on load
-        // $("#reference").hide();
-        // if ($("#trf_type").val() === "in") {
-        //   $("#reference").show();
-        // }
-        // $('#trf_type').on('change', function() {
-        //   var trfTypeValue = $(this).val();
-        //   var referenceDiv = $('#reference');
-        //   var trfRefNumInput = $('#trf_ref_num');
-
-        //   // Tampilkan atau sembunyikan elemen reference berdasarkan nilai trf_type
-        //   if (trfTypeValue === 'in') {
-        //     referenceDiv.show();
-        //     trfRefNumInput.attr('required', true);
-        //   } else {
-        //     referenceDiv.hide();
-        //     trfRefNumInput.removeAttr('required');
-        //     $("#trf_ref_num").val("");
-        //     $("#from_warehouse").val("").trigger("change");
-        //     $("#to_warehouse").val("").trigger("change");
-        //     resetRows(2);
-        //     addItemDetail(1);
-        //     var rowCount = 2;
-        //   }
-
-        //   $.ajax({
-        //     type: "POST"
-        //     , url: "{{ route('transfers.listwarehouses') }}"
-        //     , data: {
-        //       _token: '{{ csrf_token() }}'
-        //       , trf_type: trfTypeValue
-        //     }
-        //     , success: function(data) {
-        //       $("#from_warehouse").html(data.list_from_warehouses).show();
-        //       $("#to_warehouse").html(data.list_to_warehouses).show();
-        //     }
-        //     , error: function(xhr, ajaxOptions, thrownError) { // Ketika ada error
-        //       alert(xhr.status + "\n" + xhr.responseText + "\n" + thrownError); // Munculkan alert error
-        //     }
-        //   })
-        // });
-
-        // $(document).on("click", `.search-reference`, function() {
-        //   $("#referenceModal").modal("show");
-        // });
-
-        // $("#datatable").on("click", ".pick-ref", function() {
-        //   var transferId = $(this).data("transferid");
-        //   getTransferReference(transferId);
-        //   $("#referenceModal").modal("hide");
-        // });
-
-        // function resetRows(num) {
-        //   $("#inputTable tbody tr").remove();
-        //   rowCount = num; // Reset nomor baris
-        // }
-
-        // function getTransferReference(transferId) {
-        //   $.ajax({
-        //     url: "{{ route('transfers.getTransferReference') }}"
-        //     , type: "POST"
-        //     , data: {
-        //       id: transferId
-        //       , _token: '{{ csrf_token() }}'
-        //     }
-        //     , dataType: "json"
-        //     , success: function(data) {
-        //       resetRows(1);
-
-        //       console.log(data.transfer);
-        //       $("#trf_ref_num").val(data.transfer.trf_doc_num);
-        //       $("#from_warehouse").val(data.transfer.to_warehouse.id).trigger("change");
-        //       $("#trf_remarks").val(data.transfer.trf_remarks);
-
-        //       // tambahkan item-item ke addItemDetail
-        //       data.transfer.trfdetails.forEach(function(item) {
-        //         addItemDetail(rowCount, item);
-        //         rowCount++;
-        //       })
-        //     }
-        //   })
-        // }
-
+        // Variabel untuk melacak nomor baris
         addItemDetail(1); // Tambahkan baris pertama onload
         var rowCount = 2; // untuk row berikutnya saat di klik
 
@@ -349,23 +299,24 @@
             rowCount++; // Tingkatkan nomor baris setiap kali menambahkan baris
         });
 
-        function addItemDetail(rowNumber, item) {
+        function addItemDetail(rowNumber) {
             var tr = `<tr>
                     <td>
                     <div class="input-group">
-                        <input type="hidden" class="form-control item-id-${rowNumber}" name="item_id[${rowNumber}]" placeholder="${rowNumber}" value="${item ? item.item_id : ''}" required>
-                        <input type="text" class="form-control item-code-${rowNumber}" name="item_code[${rowNumber}]" value="${item ? item.item.item_code : ''}" required>
+                        <input type="hidden" class="form-control item-id-${rowNumber}" name="item_id[${rowNumber}]" placeholder="${rowNumber}" required>
+                        <input type="text" class="form-control item-code-${rowNumber}" name="item_code[${rowNumber}]" required>
                         <span class="input-group-btn">
                         <button type="button" class="btn btn-primary search-item-${rowNumber}"><i class="fa fa-search"></i></button>
                         </span>
                     </div>
                     </td>
-                    <td><input type="text" class="form-control description-${rowNumber}" value="${item ? item.item.description : ''}" readonly></td>
-                    <td><input type="number" class="form-control trf-qty-${rowNumber}" name="trf_qty[${rowNumber}]" value="${item ? item.trf_qty : ''}" required data-parsley-min="1" data-parsley-trigger="keyup" data-parsley-checkstock${rowNumber}></td>
-                    <td><input type="text" class="form-control trf-line-remarks-${rowNumber}" name="trf_line_remarks[${rowNumber}]" value="${item ? item.trf_line_remarks : ''}" required></td>
+                    <td><input type="text" class="form-control description-${rowNumber}" readonly></td>
+                    <td><input type="number" class="form-control mr-qty-${rowNumber}" name="mr_qty[${rowNumber}]" required data-parsley-min="1" data-parsley-trigger="keyup" data-parsley-checkstock${rowNumber}></td>
+                    <td><input type="text" class="form-control mr-line-remarks-${rowNumber}" name="mr_line_remarks[${rowNumber}]"></td>
                     <td><button type="button" class="btn btn-danger remove-input-field"><i class="fa fa-times"></i></button></td>
                 </tr>`;
             $("#inputTable").append(tr);
+
 
             // Inisialisasi autocomplete pada elemen "item-code" dalam baris baru
             var newRowItemCode = $(`#inputTable tr:last .item-code-${rowNumber}`);
@@ -437,17 +388,17 @@
                 var newRowNumber = 1;
                 $("#inputTable tr").each(function() {
                     $(this)
-                        .find(`.item-id-${newRowNumber}`)
+                        .find('.item-id-' + newRowNumber)
                         .attr("name", `item_id[${newRowNumber}]`);
                     $(this)
-                        .find(`.item-code-${newRowNumber}`)
+                        .find('.item-code-' + newRowNumber)
                         .attr("name", `item_code[${newRowNumber}]`);
                     $(this)
-                        .find(`.trf-qty-${newRowNumber}`)
-                        .attr("name", `trf_qty[${newRowNumber}]`);
+                        .find('.mr-qty-' + newRowNumber)
+                        .attr("name", `mr_qty[${newRowNumber}]`);
                     $(this)
-                        .find(`.trf-line-remarks-${newRowNumber}`)
-                        .attr("name", `trf_line_remarks[${newRowNumber}]`);
+                        .find('.mr-line-remarks-' + newRowNumber)
+                        .attr("name", `mr_line_remarks[${newRowNumber}]`);
                     newRowNumber++;
                 });
             }
@@ -455,7 +406,7 @@
             // Menambahkan event handler untuk tombol .search-item-${rowNumber} yang memunculkan modal #itemModal sesuai nomor urut
             $(document).on("click", `.search-item-${rowNumber}`, function() {
                 $("#itemModal").modal("show");
-                var warehouseId = $('#from_warehouse').val();
+                var warehouseId = $('#warehouse_id').val();
                 listItem(rowNumber, warehouseId);
             });
 
@@ -479,31 +430,18 @@
                 }
             );
 
-            // add parsley validation
             $('#form').parsley();
-
-            // parsley from_warehouse and to_warehouse cannot be same
-            window.Parsley.addValidator('checkWarehouses', {
-                validateString: function(value) {
-                    return $('#from_warehouse').val() !== $('#to_warehouse').val();
-                }
-                , messages: {
-                    en: 'Cannot transfer to same warehouse'
-                }
-            });
-
-            // parsley check stock validation
             window.Parsley
                 .addValidator(`checkstock${rowNumber}`, {
                     validateNumber: function(value, requirements, instance) {
-                        var warehouse_id = $('#from_warehouse').val(); // Ganti dengan ID input warehouse
+                        var warehouse_id = $('#warehouse_id').val(); // Ganti dengan ID input warehouse
                         var item_id = $(`.item-id-${rowNumber}`).val(); // Ganti dengan ID input item_id
-
+                        console.log(warehouse_id);
                         return $.ajax({
                             url: "{{ route('inventories.checkStock') }}"
                             , method: "POST"
                             , data: {
-                                trf_qty: value
+                                mr_qty: value
                                 , warehouse_id: warehouse_id
                                 , item_id: item_id
                                 , _token: '{!! csrf_token() !!}'
@@ -577,7 +515,6 @@
                 , serverSide: true
                 , ajax: {
                     url: "{{ route('items.dataForTransaction') }}"
-                        // url: "http://localhost/bh-inventory/items/dataForTransaction"
                     , data: function(d) {
                         d.warehouseId = warehouseId;
                         d.search = $(
@@ -616,11 +553,6 @@
                         , orderable: false
                         , className: "text-right"
                     , }
-                    // , {
-                    //   data: "type_name"
-                    //   , name: "type_name"
-                    //   , orderable: false
-                    // , }
                     , {
                         data: "group_name"
                         , name: "group_name"
@@ -637,6 +569,126 @@
                 , destroy: true, // agar tidak reinitialize setiap kali listItem dipanggil
             });
         }
+
+        $('#search_button').on('click', function() {
+            searchItwo();
+        });
+
+        // Pilih item ketika tombol "Pick!" diklik
+        $(document).on('click', '.pick-item', function() {
+            const woId = $(this).data('wo-id'); // Mengambil data ID IT WO
+            const woNo = $(this).data('wo-no'); // Mengambil data Nomor IT WO
+
+            // Set nilai input it_wo_id dan it_wo_no dengan item yang dipilih
+            $('#it_wo_id').val(woId);
+            $('#it_wo_no').val(woNo);
+
+            // Tutup modal setelah item dipilih
+            $('#itwoModal').modal('hide');
+        });
+
+        function searchItwo() {
+            $('#search_result').html(''); // Kosongkan hasil pencarian sebelumnya
+
+            $.ajax({
+                url: 'http://192.168.32.37/arka-rest-server/api/it_wo_store'
+                , type: 'GET'
+                , datatype: 'json'
+                , data: {
+                    'arka-key': 'arka123'
+                    , 'date': $('#date').val()
+                    , 'kode_project': $('#kode_project').val()
+                    , 'nik': $('#nik').val()
+                    , 'name': $('#name').val()
+                    , 'no_wo': $('#no_wo').val()
+                    , 'issue': $('#issue').val()
+                    , 'status': $('#status').val()
+                }
+                , success: function(result) {
+                    if (result.status) {
+                        const itwoList = result.data;
+                        let html = '';
+
+                        html += `
+          <div class="col-md-12 col-sm-12 col-xs-12 form-group">
+            <table class="table table-striped jambo_table" width="100%">
+            <thead>
+              <tr class="headings">
+                <th class="column-title" width="1%" class="text-center">Action</th>
+                <th class="column-title">Date</th>
+                <th class="column-title">Project</th>
+                <th class="column-title">NIK</th>
+                <th class="column-title">Name</th>
+                <th class="column-title">IT WO</th>
+                <th class="column-title">Issue</th>
+                <th class="column-title">Status</th>
+              </tr>
+            </thead>
+            <tbody>`;
+
+                        // Looping untuk menambahkan baris data
+                        $.each(itwoList, (i, data) => {
+                            html += `
+            <tr>
+              <td class="text-center"><button class="btn btn-sm btn-info pick-item" data-wo-id="${data.id_wo}" data-wo-no="${data.no_wo}"><i class="fa fa-check-square-o"></i> Pick!</button></td>
+              <td>${data.date}</td>
+              <td>${data.kode_project}</td>
+              <td>${data.nik}</td>
+              <td>${data.name}</td>
+              <td>${data.no_wo}</td>
+              <td>${data.issue}</td>
+              <td class="text-center">${data.status}</td>
+            </tr>`;
+                        });
+
+                        html += `</tbody>
+          </table>
+          </div>`;
+
+                        // Tampilkan hasil pencarian
+                        $('#search_result').append(html);
+                    } else {
+                        $('#error').html(`
+            <div class="alert alert-warning alert-dismissible fade in" role="alert">
+              <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">×</span>
+              </button>
+              IT WO Not Found, Please Try Another Keyword!
+            </div>
+            `);
+                    }
+                }
+            });
+        }
+
+        // function untuk reset
+        $('#reset_button').on('click', function() {
+            resetSearch();
+        });
+
+        function resetSearch() {
+            // Kosongkan semua input
+            $('#date').val('');
+            $('#kode_project').val('');
+            $('#nik').val('');
+            $('#name').val('');
+            $('#no_wo').val('');
+            $('#issue').val('');
+            $('#status').val('');
+
+            // Hapus hasil pencarian
+            $('#search_result').html('');
+            $('#error').html('');
+        }
+
+        // Agar semua inputan di dalam modal bisa disubmit dengan menekan enter
+        $('#itwoModal').find('input').each(function() {
+            $(this).on('keypress', function(e) {
+                if (e.which === 13) {
+                    $('#search_button').click();
+                }
+            });
+        });
+
     });
 
 </script>

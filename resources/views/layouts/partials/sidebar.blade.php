@@ -5,9 +5,10 @@
     <ul class="nav side-menu">
       <li class="{{ Request::is('/') || Request::is('search*') ? 'active current-page' : '' }}"><a href="{{ url('/') }}"><i class="fa fa-dashboard"></i> Dashboard</a></li>
       @can('admin')
-      <li class="{{ Request::is('goodreceive*') || Request::is('goodissues*') || Request::is('transfers*') ? 'active' : '' }}"><a><i class=" fa fa-file-text"></i> Transactions <span class="fa fa-chevron-down"></span></a>
+      <li class="{{ Request::is('materialrequests*') || Request::is('goodreceive*') || Request::is('goodissues*') || Request::is('transfers*') ? 'active' : '' }}"><a><i class=" fa fa-file-text"></i> Transactions <span class="fa fa-chevron-down"></span></a>
         <ul class="nav child_menu" style="display: {{ Request::is('goodreceive*') || Request::is('goodissues*') || Request::is('transfers*') ? 'block' : 'none' }}">
           <li class="{{ Request::is('goodreceive*') ? 'current-page' : '' }}"><a href="{{ url('goodreceive') }}">Goods Receive</a></li>
+          <li class="{{ Request::is('materialrequests*') ? 'current-page' : '' }}"><a href="{{ url('materialrequests') }}">Material Requests</a></li>
           <li class="{{ Request::is('goodissues*') ? 'current-page' : '' }}"><a href="{{ url('goodissues') }}">Goods Issues</a></li>
           <li class="{{ Request::is('transfers*') ? 'current-page' : '' }}"><a href="{{ url('transfers') }}">Inventory Transfer</a></li>
         </ul>
@@ -16,6 +17,7 @@
       <li class="{{ Request::is('reports*') ? 'active' : '' }}"><a><i class=" fa fa-table"></i> Reports <span class="fa fa-chevron-down"></span></a>
         <ul class="nav child_menu" style="display: {{ Request::is('reports*') ? 'block' : 'none' }}">
           <li class="{{ Request::is('reports/good-receive*') ? 'current-page' : '' }}"><a href="{{ url('reports/good-receive') }}">Good Receive Reports</a></li>
+          <li class="{{ Request::is('reports/material-request*') ? 'current-page' : '' }}"><a href="{{ url('reports/material-request') }}">Material Requests Reports</a></li>
           <li class="{{ Request::is('reports/good-issue*') ? 'current-page' : '' }}"><a href="{{ url('reports/good-issue') }}">Good Issue Reports</a></li>
           <li class="{{ Request::is('reports/transfer*') ? 'current-page' : '' }}"><a href="{{ url('reports/transfer') }}">Transfer Reports</a></li>
           <li class="{{ Request::is('reports/inventory-audit*') ? 'current-page' : '' }}"><a href="{{ url('reports/inventory-audit') }}">Inventory Audit Reports</a></li>

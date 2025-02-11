@@ -49,9 +49,16 @@
                   <input type="date" class="form-control" name="gi_posting_date" value="{{ $goodissue->gi_posting_date }}" required>
                 </div>
                 <div class="form-group">
+                  <label>MR No Reference</label>
+                  <input type="text" class="form-control" id="mr_no" value="{{ $goodissue->materialRequest->mr_doc_num }}" readonly />
+                </div>
+                <div class="form-group">
                   <label>Warehouse <span class="required">*</span></label>
                   <input type="text" class="form-control" value="{{ $goodissue->warehouse->warehouse_name }} ({{ $goodissue->warehouse->bouwheer->bouwheer_name }})" readonly>
                 </div>
+
+              </div>
+              <div class="col-md-6 col-xs-12 left-margin">
                 <div class="form-group">
                   <label>Project <span class="required">*</span></label>
                   <select id="project_id" class="select2 form-control" name="project_id" style="width: 100%" required>
@@ -61,9 +68,6 @@
                     @endforeach
                   </select>
                 </div>
-              </div>
-              <div class="col-md-6 col-xs-12 left-margin">
-
                 <div class="form-group">
                   <label>Issue Purpose <span class="required">*</span></label>
                   <select id="issue_purpose_id" class="select2 form-control" name="issue_purpose_id" style="width: 100%" required>
@@ -86,7 +90,7 @@
                 </div>
                 <div class="form-group">
                   <label>Remarks</label>
-                  <textarea class="form-control" rows="4" name="gi_remarks" required>{{ $goodissue->gi_remarks }}</textarea>
+                  <textarea class="form-control" rows="2" name="gi_remarks" required>{{ $goodissue->gi_remarks }}</textarea>
                   <input type="hidden" class="form-control" name="gi_status" value="open" />
                 </div>
               </div>

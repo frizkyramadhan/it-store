@@ -8,8 +8,10 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\BatchController;
 use App\Http\Controllers\GroupController;
 use App\Http\Controllers\PlantController;
+use App\Http\Controllers\PermitController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\VendorController;
+use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\SummaryController;
 use App\Http\Controllers\BouwheerController;
 use App\Http\Controllers\TransferController;
@@ -19,8 +21,7 @@ use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\WarehouseController;
 use App\Http\Controllers\GoodReceiveController;
 use App\Http\Controllers\IssuePurposeController;
-use App\Http\Controllers\PermitController;
-use App\Http\Controllers\ProjectController;
+use App\Http\Controllers\MaterialRequestController;
 
 /*
 |--------------------------------------------------------------------------
@@ -93,6 +94,8 @@ Route::group(['middleware' => ['auth']], function () {
     Route::get('goodissues/forget', [GoodIssueController::class, 'forget'])->name('goodissues.forget');
     Route::get('goodissues/{goodissue}/print', [GoodIssueController::class, 'print'])->name('goodissues.print');
     Route::post('goodissues/{goodissue}/cancel', [GoodIssueController::class, 'cancel'])->name('goodissues.cancel');
+    Route::get('goodsissues/create', [GoodIssueController::class, 'create'])->name('goodsissues.create');
+    Route::get('goodsissues/get-mr-reference/{id}', [GoodIssueController::class, 'getMrReference'])->name('goodsissues.getmrreference');
     Route::resource('goodissues', GoodIssueController::class);
 
     Route::get('transfers/data', [TransferController::class, 'getTransfer'])->name('transfers.data');
@@ -102,6 +105,14 @@ Route::group(['middleware' => ['auth']], function () {
     Route::post('transfers/{transfer}/cancel', [TransferController::class, 'cancel'])->name('transfers.cancel');
     Route::post('transfers/getTransferReference', [TransferController::class, 'getTransferReference'])->name('transfers.getTransferReference');
     Route::resource('transfers', TransferController::class);
+
+    Route::get('materialrequests/data', [MaterialRequestController::class, 'getMaterialRequest'])->name('materialrequests.data');
+    Route::get('materialrequests/request-batch', [MaterialRequestController::class, 'requestBatch'])->name('materialrequests.requestbatch');
+    Route::get('materialrequests/forget', [MaterialRequestController::class, 'forget'])->name('materialrequests.forget');
+    Route::get('materialrequests/{materialrequest}/print', [MaterialRequestController::class, 'print'])->name('materialrequests.print');
+    Route::post('materialrequests/{materialrequest}/cancel', [MaterialRequestController::class, 'cancel'])->name('materialrequests.cancel');
+    Route::resource('materialrequests', MaterialRequestController::class);
+
 
     Route::post('inventories/checkStock', [InventoryController::class, 'checkStock'])->name('inventories.checkStock');
 
@@ -114,6 +125,7 @@ Route::group(['middleware' => ['auth']], function () {
     // Route::resource('batches', BatchController::class);
 
     Route::get('reports/good-receive', [ReportController::class, 'goodReceive'])->name('report.goodreceive');
+    Route::get('reports/material-request', [ReportController::class, 'materialRequest'])->name('report.materialrequest');
     Route::get('reports/good-issue', [ReportController::class, 'goodIssue'])->name('report.goodissue');
     Route::get('reports/transfer', [ReportController::class, 'transfer'])->name('report.transfer');
     Route::get('reports/inventory-audit', [ReportController::class, 'inventoryAuditReport'])->name('report.inventoryaudit');

@@ -18,7 +18,7 @@
             <h2>{{ $subtitle }}</h2>
             <ul class="nav navbar-right panel_toolbox">
               <a href="{{ url()->previous() }}" class="btn btn-success"><i class="fa fa-arrow-circle-left"></i> Back</a>
-              <a href="{{ url('goodissues/create') }}" class="btn btn-warning"><i class="fa fa-plus-circle"></i> Add</a>
+              <a href="{{ url('materialrequests/create') }}" class="btn btn-warning"><i class="fa fa-plus-circle"></i> Add</a>
             </ul>
             <div class="clearfix"></div>
           </div>
@@ -101,7 +101,7 @@
       , processing: true
       , serverSide: true
       , ajax: {
-        url: `{{ route('goodissues.data') }}`
+        url: `{{ route('materialrequests.data') }}`
         , data: function(data) {
           data.search = $('input[type=search][aria-controls=datatable-serverside]').val();
         }
@@ -113,11 +113,11 @@
         , className: 'text-center'
       }, {
         data: 'documentNumber'
-        , name: 'gi_doc_num'
+        , name: 'mr_doc_num'
         , orderable: false
       }, {
         data: 'postingDate'
-        , name: 'gi_posting_date'
+        , name: 'mr_posting_date'
         , orderable: false
       }, {
         data: 'projectCode'
@@ -130,7 +130,7 @@
         , orderable: false
       }, {
         data: 'remarks'
-        , name: 'gi_remarks'
+        , name: 'mr_remarks'
         , orderable: false
         , render: function(data) {
           return data.length > 50 ? data.substr(0, 50) + '...' : data;
@@ -146,7 +146,7 @@
         , orderable: false
       }, {
         data: 'status'
-        , name: 'gi_status'
+        , name: 'mr_status'
         , orderable: false
         , className: 'text-center'
       }, {

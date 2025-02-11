@@ -50,6 +50,7 @@ class InventoryController extends Controller
     public function checkStock(Request $request)
     {
         $gi_qty = $request->input('gi_qty');
+        $mr_qty = $request->input('mr_qty');
         $trf_qty = $request->input('trf_qty');
         $warehouse_id = $request->input('warehouse_id');
         $item_id = $request->input('item_id');
@@ -80,6 +81,14 @@ class InventoryController extends Controller
                 ];
                 return response()->json($output);
             }
+        } else if ($mr_qty) {
+            if ($stock >= $mr_qty) {
+                $output = [
+                    'success' => true,
+                    'stock' => $stock
+                ];
+                return response()->json($output);
+            }
         }
     }
 
@@ -99,41 +108,41 @@ class InventoryController extends Controller
     }
 
 
-    public function batchIn($batch_id, $warehouse_id, $quantity)
-    {
-        // Update stok di tabel Inventory
-        $batchInventory = BatchInventory::where('batch_id', $batch_id)
-            ->where('warehouse_id', $warehouse_id)
-            ->first();
+    // public function batchIn($batch_id, $warehouse_id, $quantity)
+    // {
+    //     // Update stok di tabel Inventory
+    //     $batchInventory = BatchInventory::where('batch_id', $batch_id)
+    //         ->where('warehouse_id', $warehouse_id)
+    //         ->first();
 
-        if ($batchInventory) {
-            $batchInventory->batch_stock += $quantity;
-            $batchInventory->save();
-        } else {
-            // Jika batch dan warehouse tidak ada dalam inventori, buat entri baru
-            $newBatchInventory = new BatchInventory();
-            $newBatchInventory->batch_id = $batch_id;
-            $newBatchInventory->warehouse_id = $warehouse_id;
-            $newBatchInventory->batch_stock = $quantity;
-            $newBatchInventory->save();
-        }
-    }
+    //     if ($batchInventory) {
+    //         $batchInventory->batch_stock += $quantity;
+    //         $batchInventory->save();
+    //     } else {
+    //         // Jika batch dan warehouse tidak ada dalam inventori, buat entri baru
+    //         $newBatchInventory = new BatchInventory();
+    //         $newBatchInventory->batch_id = $batch_id;
+    //         $newBatchInventory->warehouse_id = $warehouse_id;
+    //         $newBatchInventory->batch_stock = $quantity;
+    //         $newBatchInventory->save();
+    //     }
+    // }
 
-    public function batchOut($batch_id, $warehouse_id, $quantity)
-    {
-        $batchInventory = BatchInventory::where('batch_id', $batch_id)
-            ->where('warehouse_id', $warehouse_id)
-            ->first();
+    // public function batchOut($batch_id, $warehouse_id, $quantity)
+    // {
+    //     $batchInventory = BatchInventory::where('batch_id', $batch_id)
+    //         ->where('warehouse_id', $warehouse_id)
+    //         ->first();
 
-        if ($batchInventory) {
-            if ($batchInventory->batch_stock >= $quantity) {
-                $batchInventory->batch_stock -= $quantity;
-                $batchInventory->save();
-            } else {
-                return response()->json(['message' => 'Stok tidak mencukupi.'], 400);
-            }
-        } else {
-            return response()->json(['message' => 'Batch dan warehouse tidak ada dalam inventori.'], 404);
-        }
-    }
+    //     if ($batchInventory) {
+    //         if ($batchInventory->batch_stock >= $quantity) {
+    //             $batchInventory->batch_stock -= $quantity;
+    //             $batchInventory->save();
+    //         } else {
+    //             return response()->json(['message' => 'Stok tidak mencukupi.'], 400);
+    //         }
+    //     } else {
+    //         return response()->json(['message' => 'Batch dan warehouse tidak ada dalam inventori.'], 404);
+    //     }
+    // }
 }

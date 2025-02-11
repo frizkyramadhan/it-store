@@ -4,15 +4,14 @@ namespace App\Models;
 
 use App\Models\User;
 use App\Models\Project;
-use App\Models\GiDetail;
+use App\Models\MrDetail;
 use App\Models\Warehouse;
 use App\Models\IssuePurpose;
-use App\Models\MaterialRequest;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
-class GoodIssue extends Model
+class MaterialRequest extends Model
 {
     use HasFactory, HasUlids;
 
@@ -28,23 +27,23 @@ class GoodIssue extends Model
         return $this->belongsTo(Project::class);
     }
 
-    public function issuepurpose()
-    {
-        return $this->belongsTo(IssuePurpose::class, 'issue_purpose_id', 'id');
-    }
-
-    public function gidetails()
-    {
-        return $this->hasMany(GiDetail::class);
-    }
-
     public function user()
     {
         return $this->belongsTo(User::class);
     }
 
-    public function materialRequest()
+    public function mrdetails()
     {
-        return $this->belongsTo(MaterialRequest::class);
+        return $this->hasMany(MrDetail::class);
+    }
+
+    public function issuepurpose()
+    {
+        return $this->belongsTo(IssuePurpose::class, 'issue_purpose_id', 'id');
+    }
+
+    public function isClosed()
+    {
+        return $this->status === 'closed';
     }
 }

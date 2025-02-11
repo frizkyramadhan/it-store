@@ -91,12 +91,9 @@
                       <th style="vertical-align: middle" width="5%">Project</th>
                       <th style="vertical-align: middle">Warehouse</th>
                       <th style="vertical-align: middle">Remarks</th>
-                      <th style="vertical-align: middle">Total Cost</th>
                       <th style="vertical-align: middle">Item Code</th>
                       <th style="vertical-align: middle">Description</th>
                       <th style="vertical-align: middle">Qty</th>
-                      <th style="vertical-align: middle">Price</th>
-                      {{-- <th style="vertical-align: middle">Group</th> --}}
                       <th style="vertical-align: middle">Line Remarks</th>
                       <th style="vertical-align: middle">Created By</th>
                     </tr>
@@ -106,18 +103,16 @@
                     @foreach ($results as $result)
                     <tr>
                       <td>{{ $loop->iteration }}</td>
-                      <td>{{ $result->gi_doc_num }}</td>
-                      <td class="text-right">{{ date('d M Y', strtotime($result->gi_posting_date)) }}</td>
+                      <td>{{ $result->mr_doc_num }}</td>
+                      <td class="text-right">{{ date('d M Y', strtotime($result->mr_posting_date)) }}</td>
                       <td>{{ $result->project_code }}</td>
                       <td>{{ $result->warehouse_name }}</td>
-                      <td>{{ $result->gi_remarks }}</td>
-                      <td>{{ number_format($result->total_cost, 2, ',', '.') }}</td>
+                      <td>{{ $result->mr_remarks }}</td>
                       <td>{{ $result->item_code }}</td>
                       <td>{{ $result->description }}</td>
-                      <td class="text-right">{{ number_format($result->gi_qty, 2, ',', '.') }}</td>
-                      <td class="text-right">{{ number_format($result->price, 2, ',', '.') }}</td>
+                      <td class="text-right">{{ $result->mr_qty }}</td>
                       {{-- <td>{{ $result->group_name }}</td> --}}
-                      <td>{{ $result->gi_line_remarks }}</td>
+                      <td>{{ $result->mr_line_remarks }}</td>
                       <td>{{ $result->name }}</td>
                     </tr>
                     @endforeach

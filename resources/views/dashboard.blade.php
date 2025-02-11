@@ -43,7 +43,7 @@
     </div>
 
     <div class="row">
-      <div class="col-lg-6 col-md-6 col-sm-6 col-xs-12">
+      <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
         <div class="x_panel">
           <div class="x_title">
             <h2>Search Item</h2>
@@ -65,6 +65,41 @@
               </div>
               <div class="clearfix"></div>
             </article>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-6 col-md-6 col-sm-6 col-xs-12">
+        <div class="x_panel">
+          <div class="x_title">
+            <h2>Material Request Open</h2>
+            <div class="clearfix"></div>
+          </div>
+          <div class="x_content">
+            <table id="datatable-buttons" class="table table-striped table-bordered jambo_table" width="100%">
+              <thead>
+                <tr class="headings">
+                  <th>#</th>
+                  <th>MR No</th>
+                  <th>Date</th>
+                  <th>Project</th>
+                  <th>Remarks</th>
+                  <th class="text-center">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                @foreach ($materialRequests as $mr)
+                <tr>
+                  <td>{{ $loop->iteration }}</td>
+                  <td>{{ $mr->mr_doc_num }}</td>
+                  <td>{{ $mr->mr_posting_date }}</td>
+                  <td>{{ $mr->project->project_code }}</td>
+                  <td>{{ $mr->mr_remarks }}</td>
+                  <td class="text-center"><a href="{{ url('materialrequests/'.$mr->id) }}" class="btn btn-sm btn-info"><i class="fa fa-info-circle"></i> Detail</a></td>
+                </tr>
+                @endforeach
+              </tbody>
+            </table>
           </div>
         </div>
       </div>

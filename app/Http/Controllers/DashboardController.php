@@ -11,6 +11,7 @@ use App\Models\Permit;
 use App\Models\GiDetail;
 use App\Models\GrDetail;
 use App\Models\Inventory;
+use App\Models\MaterialRequest;
 use App\Models\Warehouse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -37,44 +38,14 @@ class DashboardController extends Controller
 
         $totalUser = User::count();
 
+        $materialRequests = MaterialRequest::where('mr_status', 'open')->get();
         $outOfStocks = Inventory::with(['item', 'warehouse'])->where('stock', '<=', 5)->where('stock', '>', 0)->get();
 
         $lastIncoming = GrDetail::with(['item'])->latest()->limit(10)->get();
         $lastOutcoming = GiDetail::with(['item'])->latest()->limit(10)->get();
 
-
-        // $now = date('d-M-Y');
-        // $expiringBatches = Batch::with('item')->where('batch_status', 'active')->get()
-        //     ->filter(function ($batches) use ($now) {
-        //         $expireDate = date('d-M-Y', strtotime($batches->mfg_date . "+" . $batches->item->shelf_life . " months"));
-
-        //         $nowTimestamp = strtotime($now);
-        //         $expireDateTimestamp = strtotime($expireDate);
-        //         $remainingDays = ($expireDateTimestamp - $nowTimestamp) / (60 * 60 * 24);
-
-        //         return $remainingDays <= 30;
-        //     })
-        //     ->sortByDesc(function ($batches) {
-        //         $expireDate = date('d-M-Y', strtotime($batches->mfg_date . "+" . $batches->item->shelf_life . " months"));
-        //         return strtotime($expireDate);
-        //     });
-
-        // $expiringPermits = Permit::where('permit_status', 'valid')->get()
-        //     ->filter(function ($permits) use ($now) {
-        //         $expireDate = date('d-M-Y', strtotime($permits->permit_date . "+" . $permits->valid_month . " months"));
-
-        //         $nowTimestamp = strtotime($now);
-        //         $expireDateTimestamp = strtotime($expireDate);
-        //         $remainingDays = ($expireDateTimestamp - $nowTimestamp) / (60 * 60 * 24);
-        //         return $remainingDays >= -365 && $remainingDays <= 30;
-        //     })
-        //     ->sortByDesc(function ($permits) {
-        //         $expireDate = date('d-M-Y', strtotime($permits->permit_date . "+" . $permits->valid_month . " months"));
-        //         return strtotime($expireDate);
-        //     });
-
         // return view('dashboard', compact('title', 'subtitle', 'totalExplosive', 'totalGunBody', 'totalBatch', 'totalUser', 'outOfStocks', 'expiringBatches', 'expiringPermits'));
-        return view('dashboard', compact('title', 'subtitle', 'totalItem', 'totalGroup', 'totalStock', 'totalUser', 'outOfStocks', 'lastIncoming', 'lastOutcoming'));
+        return view('dashboard', compact('title', 'subtitle', 'totalItem', 'totalGroup', 'totalStock', 'totalUser', 'materialRequests',  'outOfStocks', 'lastIncoming', 'lastOutcoming'));
     }
 
     // untuk modal list all item
